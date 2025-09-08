@@ -43,6 +43,48 @@ struct game_state
   struct animation_state player_animations[MAX_PLAYERS];
 };
 
+void handle_input(struct game_state *state)
+{
+  uint8_t joy = joypad();
+  if (joy & J_LEFT)
+  {
+    if (state->player_positions[state->current_player].x > 8)
+    {
+      state->player_positions[state->current_player].x -= 1;
+    }
+    state->player_positions[state->current_player].direction = -1;
+  }
+  else if (joy & J_RIGHT)
+  {
+    if (state->player_positions[state->current_player].x < 160)
+    {
+      state->player_positions[state->current_player].x += 1;
+    }
+    state->player_positions[state->current_player].direction = 1;
+  }
+  else
+  {
+    state->player_positions[state->current_player].direction = 0;
+  }
+  if (state->player_positions[state->current_player].x <= 20)
+  {
+
+    if (state->player_positions[state->current_player].car < state->cars - 1)
+    {
+      state->player_positions[state->current_player].car += 1;
+      state->player_positions[state->current_player].x = 160;
+    }
+  }
+  else if (state->player_positions[state->current_player].x >= 160)
+  {
+    if (state->player_positions[state->current_player].car > 0)
+    {
+      state->player_positions[state->current_player].car -= 1;
+      state->player_positions[state->current_player].x = 20;
+    }
+  }
+}
+
 #define SP_CONDUCTOR_FRAME_TILE_COUNT 2
 #define PLAYER_ANIMATION_CONST(player)                             \
   {                                                                \
@@ -216,7 +258,8 @@ void main(void)
           {.frame = 1, .direction = 1, .frame_tick = 0},
           {.frame = 1, .direction = 1, .frame_tick = 0},
           {.frame = 1, .direction = 1, .frame_tick = 0},
-      }};
+      },
+  };
 
   draw_train_map(&state);
 
@@ -225,44 +268,7 @@ void main(void)
     wait_vbl_done();
 
     // handle input
-    uint8_t joy = joypad();
-    if (joy & J_LEFT)
-    {
-      if (state.player_positions[state.current_player].x > 8)
-      {
-        state.player_positions[state.current_player].x -= 1;
-      }
-      state.player_positions[state.current_player].direction = -1;
-    }
-    else if (joy & J_RIGHT)
-    {
-      if (state.player_positions[state.current_player].x < 160)
-      {
-        state.player_positions[state.current_player].x += 1;
-      }
-      state.player_positions[state.current_player].direction = 1;
-    }
-    else
-    {
-      state.player_positions[state.current_player].direction = 0;
-    }
-    if (state.player_positions[state.current_player].x <= 20)
-    {
-
-      if (state.player_positions[state.current_player].car < state.cars - 1)
-      {
-        state.player_positions[state.current_player].car += 1;
-        state.player_positions[state.current_player].x = 160;
-      }
-    }
-    else if (state.player_positions[state.current_player].x >= 160)
-    {
-      if (state.player_positions[state.current_player].car > 0)
-      {
-        state.player_positions[state.current_player].car -= 1;
-        state.player_positions[state.current_player].x = 20;
-      }
-    }
+    handle_input(&state);
 
     // npc input
     npc_action(&state, 1);
