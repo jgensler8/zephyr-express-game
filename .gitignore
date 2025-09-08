@@ -1,5 +1,5 @@
 *.gb
-*.nap
+*.map
 *.noi
 *.sav
 assets/*.png

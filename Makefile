@@ -2,7 +2,7 @@ CC	= ../../bin/lcc -Wa-l -Wl-m -Wl-j
 ROMUSAGE = ../../bin/romusage
 PNG2ASSET = ../../bin/png2asset
 BIN	= train-game.gb
-ASSETS = conductor.png
+ASSETS = conductor.png train_map_0.png train_player_logo.png
 ASSET_IN = assets
 ASSETS_DEP = $(addprefix assets/,$(ASSETS))
 PNG2ASSET_OUT = src/gen
@@ -14,6 +14,8 @@ all:	$(BIN)
 
 $(ASSETS_OUT): $(ASSETS_DEP)
 	$(PNG2ASSET) $(ASSET_IN)/conductor.png -o $(PNG2ASSET_OUT)/conductor.c -noflip -bpp 2 -spr8x16 -max_palettes 3 -sprite_no_optimize -b 1
+	$(PNG2ASSET) $(ASSET_IN)/train_map_0.png -o $(PNG2ASSET_OUT)/train_map_0.c -noflip -bpp 2 -spr8x16 -max_palettes 3 -sprite_no_optimize -b 1
+	$(PNG2ASSET) $(ASSET_IN)/train_player_logo.png -o $(PNG2ASSET_OUT)/train_player_logo.c -noflip -bpp 2 -spr8x16 -max_palettes 3 -sprite_no_optimize -b 1
 
 compile.bat: Makefile
 	@echo "REM Automatically generated from Makefile" > compile.bat
