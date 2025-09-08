@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "GBDK",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/src",
+                "C:/Users/jgens/Downloads/gbdk-win64/gbdk/include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__PORT_sm83",
+                "__TARGET_gb"
+            ],
+            "configurationProvider": "ms-vscode.makefile-tools",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}

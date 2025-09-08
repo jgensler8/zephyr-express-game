@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build, Kill & Run (Default)",
+            "type": "shell",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File .\\.vscode\\build.ps1",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gbdk"
+            ],
+            "presentation": {
+                "reveal": "always"
+            }
+        },
+        {
+            "label": "Build Only",
+            "type": "shell",
+            "command": "make compo25.gbc usage",
+            "problemMatcher": [
+                "$gbdk"
+            ]
+        }
+    ]
+}
