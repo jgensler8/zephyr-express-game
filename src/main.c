@@ -6,11 +6,22 @@
 #include "gen/train_player_logo_1.h"
 #include "gen/train_player_logo_2.h"
 #include "gen/train_player_logo_3.h"
+#include "gen/tool_wifi.h"
+#include "gen/tool_wrench.h"
+#include "gen/tool_drink.h"
+#include "gen/tool_cat.h"
+#include "gen/tool_music.h"
 
 #ifdef NINTENDO_NES
 #define PLATFORM_Y_ADJUST 0
 #else
 #define PLATFORM_Y_ADJUST 16
+#endif
+
+#ifdef NINTENDO_NES
+#define GET_8x16_SPRITE_TILE(tile) (tile + 1)
+#else
+#define GET_8x16_SPRITE_TILE(tile) (tile)
 #endif
 
 struct animation_const
@@ -39,12 +50,32 @@ struct player_position
   int8_t direction;
 };
 
+enum TOOL
+{
+  TOOL_WIFI,
+  TOOL_WRENCH,
+  TOOL_DRINK,
+  TOOL_CAT,
+  TOOL_MUSIC,
+  TOOL_COUNT,
+};
+
+struct tool
+{
+  uint8_t unlocked;
+  uint8_t car;
+  uint8_t x;
+  uint8_t y;
+  uint8_t player_holding;
+};
+
 #define MAX_PLAYERS 4
 struct game_state
 {
   uint8_t cars;
   struct player_position player_positions[MAX_PLAYERS];
   struct animation_state player_animations[MAX_PLAYERS];
+  struct tool tools[TOOL_COUNT];
 };
 
 void handle_input(struct game_state *state, uint8_t player)
@@ -89,10 +120,11 @@ void handle_input(struct game_state *state, uint8_t player)
   }
 }
 
+#define PLAYER_SPRITE_START 0
 #define SP_CONDUCTOR_FRAME_TILE_COUNT 2
 #define PLAYER_ANIMATION_CONST(player)                             \
   {                                                                \
-    .sp_idx = 0 + player,                                          \
+    .sp_idx = PLAYER_SPRITE_START + player,                        \
     .data_idx = 0 + SP_CONDUCTOR_FRAME_TILE_COUNT * player,        \
     .frames = 3,                                                   \
     .neutral_frame = 1,                                            \
@@ -158,6 +190,18 @@ void draw_train_map(struct game_state *state)
 }
 
 #define PLAYER_MAP_SPRITE_START 8
+void initialize_players_map(void)
+{
+  set_sprite_data(10, train_player_logo_0_TILE_COUNT, train_player_logo_0_tiles);
+  set_sprite_tile(PLAYER_MAP_SPRITE_START + 0, GET_8x16_SPRITE_TILE(10));
+  set_sprite_data(12, train_player_logo_1_TILE_COUNT, train_player_logo_1_tiles);
+  set_sprite_tile(PLAYER_MAP_SPRITE_START + 1, GET_8x16_SPRITE_TILE(12));
+  set_sprite_data(14, train_player_logo_2_TILE_COUNT, train_player_logo_2_tiles);
+  set_sprite_tile(PLAYER_MAP_SPRITE_START + 2, GET_8x16_SPRITE_TILE(14));
+  set_sprite_data(16, train_player_logo_3_TILE_COUNT, train_player_logo_3_tiles);
+  set_sprite_tile(PLAYER_MAP_SPRITE_START + 3, GET_8x16_SPRITE_TILE(16));
+}
+
 void draw_players_map(struct game_state *state)
 {
   // all players logo
@@ -165,6 +209,14 @@ void draw_players_map(struct game_state *state)
   {
     move_sprite(PLAYER_MAP_SPRITE_START + player, 160 - (state->player_positions[player].car * 3 * 8), PLATFORM_Y_ADJUST + 16);
   }
+}
+
+void initialize_players(void)
+{
+  set_sprite_tile(PLAYER_SPRITE_START, GET_8x16_SPRITE_TILE(0));
+  set_sprite_tile(PLAYER_SPRITE_START + 1, GET_8x16_SPRITE_TILE(0));
+  set_sprite_tile(PLAYER_SPRITE_START + 2, GET_8x16_SPRITE_TILE(0));
+  set_sprite_tile(PLAYER_SPRITE_START + 3, GET_8x16_SPRITE_TILE(0));
 }
 
 void draw_players(struct game_state *state, uint8_t current_player)
@@ -197,6 +249,35 @@ void draw_players(struct game_state *state, uint8_t current_player)
   }
 }
 
+#define TOOL_SPRITE_START 12
+#define TOOL_DATA_START 18
+#define LOAD_TOOL(name, num)                                                                   \
+  set_sprite_data(TOOL_DATA_START + (num * 2), tool_##name##_TILE_COUNT, tool_##name##_tiles); \
+  set_sprite_tile(TOOL_SPRITE_START + num, GET_8x16_SPRITE_TILE(TOOL_DATA_START + (num * 2)));
+
+void initialize_tools(void)
+{
+  LOAD_TOOL(wifi, TOOL_WIFI);
+  LOAD_TOOL(wrench, TOOL_WRENCH);
+  LOAD_TOOL(drink, TOOL_DRINK);
+  LOAD_TOOL(cat, TOOL_CAT);
+  LOAD_TOOL(music, TOOL_MUSIC);
+}
+
+void draw_tools(struct game_state *state, uint8_t current_player)
+{
+  uint8_t current_car = state->player_positions[current_player].car;
+  for (uint8_t tool = 0; tool < TOOL_COUNT; tool++)
+  {
+    if (!state->tools[tool].unlocked || state->tools[tool].car != current_car)
+    {
+      hide_sprite(TOOL_SPRITE_START + tool);
+      continue;
+    }
+    move_sprite(TOOL_SPRITE_START + tool, state->tools[tool].x, PLATFORM_Y_ADJUST + state->tools[tool].y);
+  }
+}
+
 void npc_action(struct game_state *state, uint8_t npc)
 {
   // move npc
@@ -220,12 +301,6 @@ void npc_action(struct game_state *state, uint8_t npc)
   }
 }
 
-#ifdef NINTENDO_NES
-#define GET_8x16_SPRITE_TILE(tile) (tile + 1)
-#else
-#define GET_8x16_SPRITE_TILE(tile) (tile) 
-#endif
-
 BANKREF_EXTERN(train_map_0)
 
 void main(void)
@@ -236,26 +311,15 @@ void main(void)
   SHOW_BKG;
   fill_bkg_rect(0, 0, 24, 16, 0);
 
-  // bkg
+  // train map
   SWITCH_ROM(BANK(train_map_0));
   set_bkg_data(TRAIN_MAP_CAR_TILE_START, train_map_0_TILE_COUNT, train_map_0_tiles);
-
-  // player
-#define PLAYER_SPRITE_START 0
-  set_sprite_tile(PLAYER_SPRITE_START, GET_8x16_SPRITE_TILE(0));
-  set_sprite_tile(PLAYER_SPRITE_START + 1, GET_8x16_SPRITE_TILE(0));
-  set_sprite_tile(PLAYER_SPRITE_START + 2, GET_8x16_SPRITE_TILE(0));
-  set_sprite_tile(PLAYER_SPRITE_START + 3, GET_8x16_SPRITE_TILE(0));
-
-  // all player logos
-  set_sprite_data(10, train_player_logo_0_TILE_COUNT, train_player_logo_0_tiles);
-  set_sprite_tile(PLAYER_MAP_SPRITE_START + 0, GET_8x16_SPRITE_TILE(10));
-  set_sprite_data(12, train_player_logo_1_TILE_COUNT, train_player_logo_1_tiles);
-  set_sprite_tile(PLAYER_MAP_SPRITE_START + 1, GET_8x16_SPRITE_TILE(12));
-  set_sprite_data(14, train_player_logo_2_TILE_COUNT, train_player_logo_2_tiles);
-  set_sprite_tile(PLAYER_MAP_SPRITE_START + 2, GET_8x16_SPRITE_TILE(14));
-  set_sprite_data(16, train_player_logo_3_TILE_COUNT, train_player_logo_3_tiles);
-  set_sprite_tile(PLAYER_MAP_SPRITE_START + 3, GET_8x16_SPRITE_TILE(16));
+  // player map logo
+  initialize_players_map();
+  // player sprite
+  initialize_players();
+  // tools
+  initialize_tools();
 
 #define RANDOM_START_POSITION (30 + (rand() % 100))
 #define RANDOM_DIRECTION (rand() < 128 ? -1 : 1)
@@ -272,6 +336,24 @@ void main(void)
           {.frame = 1, .direction = 1, .frame_tick = 0},
           {.frame = 1, .direction = 1, .frame_tick = 0},
           {.frame = 1, .direction = 1, .frame_tick = 0},
+      },
+      .tools = {
+          // TOOL_WIFI
+          {
+              .unlocked = 1,
+              .car = 0,
+              .x = 100,
+              .y = 80,
+              .player_holding = 0,
+          },
+          // TOOL_WRENCH
+          {
+              .unlocked = 1,
+              .car = 1,
+              .x = 100,
+              .y = 80,
+              .player_holding = 0,
+          },
       },
   };
 
@@ -291,5 +373,6 @@ void main(void)
     vsync();
     draw_players(&state, 0);
     draw_players_map(&state);
+    draw_tools(&state, 0);
   }
 }
