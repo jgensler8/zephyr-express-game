@@ -58,8 +58,10 @@ enum TOOL
   TOOL_CAT,
   TOOL_MUSIC,
   TOOL_COUNT,
+  TOOL_NONE = 254,
 };
 
+#define PLAYER_HOLDING_NONE 254
 struct tool
 {
   uint8_t unlocked;
@@ -78,6 +80,37 @@ struct game_state
   struct tool tools[TOOL_COUNT];
 };
 
+uint8_t j0_a_pressed = 0;
+void update_tool_cars(struct game_state *state)
+{
+  for (uint8_t tool = 0; tool < TOOL_COUNT; tool++)
+  {
+    if (state->tools[tool].player_holding != PLAYER_HOLDING_NONE)
+    {
+      state->tools[tool].car = state->player_positions[state->tools[tool].player_holding].car;
+    }
+  }
+}
+uint8_t tool_held(struct game_state *state, uint8_t player)
+{
+  for (uint8_t tool = 0; tool < TOOL_COUNT; tool++)
+  {
+    if (state->tools[tool].player_holding == player)
+    {
+      return tool;
+    }
+  }
+  return TOOL_NONE;
+}
+uint8_t tool_near(struct game_state *state, enum TOOL_TYPE tool, uint8_t player)
+{
+  uint8_t nearness_margin_x = 8;
+  uint8_t nearness_margin_y = 16;
+  return state->tools[tool].x >= state->player_positions[player].x - nearness_margin_x &&
+         state->tools[tool].x <= state->player_positions[player].x + nearness_margin_x &&
+         state->tools[tool].y >= state->player_positions[player].y - nearness_margin_y &&
+         state->tools[tool].y <= state->player_positions[player].y + nearness_margin_y;
+}
 void handle_input(struct game_state *state, uint8_t player)
 {
   uint8_t joy = joypad();
@@ -108,6 +141,7 @@ void handle_input(struct game_state *state, uint8_t player)
     {
       state->player_positions[player].car += 1;
       state->player_positions[player].x = 160;
+      update_tool_cars(state);
     }
   }
   else if (state->player_positions[player].x >= 160)
@@ -116,7 +150,47 @@ void handle_input(struct game_state *state, uint8_t player)
     {
       state->player_positions[player].car -= 1;
       state->player_positions[player].x = 20;
+      update_tool_cars(state);
     }
+  }
+
+  // handle tools + tasks
+  if (joypad() & J_A && j0_a_pressed == 0)
+  {
+    j0_a_pressed = 1;
+    uint8_t held = tool_held(state, player);
+    if (held != TOOL_NONE)
+    {
+      // drop tool
+      state->tools[held].player_holding = PLAYER_HOLDING_NONE;
+    }
+    else
+    {
+      // maybe pick up tool
+      for (uint8_t tool = 0; tool < TOOL_COUNT; tool++)
+      {
+        if (state->tools[tool].unlocked &&
+            state->tools[tool].car == state->player_positions[player].car &&
+            state->tools[tool].player_holding == PLAYER_HOLDING_NONE &&
+            tool_near(state, tool, player))
+        {
+          if (state->tools[tool].player_holding == PLAYER_HOLDING_NONE)
+          {
+            state->tools[tool].player_holding = player;
+            // state->tools[tool].y -= 16;
+          }
+          else if (state->tools[tool].player_holding == player)
+          {
+            state->tools[tool].player_holding = PLAYER_HOLDING_NONE;
+            // state->tools[tool].y += 16;
+          }
+        }
+      }
+    }
+  }
+  else if (!(joypad() & J_A))
+  {
+    j0_a_pressed = 0;
   }
 }
 
@@ -274,6 +348,11 @@ void draw_tools(struct game_state *state, uint8_t current_player)
       hide_sprite(TOOL_SPRITE_START + tool);
       continue;
     }
+    if (state->tools[tool].player_holding != PLAYER_HOLDING_NONE)
+    {
+      state->tools[tool].x = state->player_positions[state->tools[tool].player_holding].x;
+      state->tools[tool].y = state->player_positions[state->tools[tool].player_holding].y + 16;
+    }
     move_sprite(TOOL_SPRITE_START + tool, state->tools[tool].x, PLATFORM_Y_ADJUST + state->tools[tool].y);
   }
 }
@@ -344,7 +423,7 @@ void main(void)
               .car = 0,
               .x = 100,
               .y = 80,
-              .player_holding = 0,
+              .player_holding = PLAYER_HOLDING_NONE,
           },
           // TOOL_WRENCH
           {
@@ -352,7 +431,7 @@ void main(void)
               .car = 1,
               .x = 100,
               .y = 80,
-              .player_holding = 0,
+              .player_holding = PLAYER_HOLDING_NONE,
           },
       },
   };
