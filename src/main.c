@@ -1,12 +1,17 @@
-#include <gb/gb.h>
+#include <gbdk/platform.h>
 #include <rand.h>
 #include "gen/conductor.h"
 #include "gen/train_map_0.h"
-#include "gen/train_player_logo_arrow.h"
 #include "gen/train_player_logo_0.h"
 #include "gen/train_player_logo_1.h"
 #include "gen/train_player_logo_2.h"
 #include "gen/train_player_logo_3.h"
+
+#ifdef NINTENDO_NES
+#define PLATFORM_Y_ADJUST 0
+#else
+#define PLATFORM_Y_ADJUST 16
+#endif
 
 struct animation_const
 {
@@ -37,50 +42,49 @@ struct player_position
 #define MAX_PLAYERS 4
 struct game_state
 {
-  uint8_t current_player;
   uint8_t cars;
   struct player_position player_positions[MAX_PLAYERS];
   struct animation_state player_animations[MAX_PLAYERS];
 };
 
-void handle_input(struct game_state *state)
+void handle_input(struct game_state *state, uint8_t player)
 {
   uint8_t joy = joypad();
   if (joy & J_LEFT)
   {
-    if (state->player_positions[state->current_player].x > 8)
+    if (state->player_positions[player].x > 8)
     {
-      state->player_positions[state->current_player].x -= 1;
+      state->player_positions[player].x -= 1;
     }
-    state->player_positions[state->current_player].direction = -1;
+    state->player_positions[player].direction = -1;
   }
   else if (joy & J_RIGHT)
   {
-    if (state->player_positions[state->current_player].x < 160)
+    if (state->player_positions[player].x < 160)
     {
-      state->player_positions[state->current_player].x += 1;
+      state->player_positions[player].x += 1;
     }
-    state->player_positions[state->current_player].direction = 1;
+    state->player_positions[player].direction = 1;
   }
   else
   {
-    state->player_positions[state->current_player].direction = 0;
+    state->player_positions[player].direction = 0;
   }
-  if (state->player_positions[state->current_player].x <= 20)
+  if (state->player_positions[player].x <= 20)
   {
 
-    if (state->player_positions[state->current_player].car < state->cars - 1)
+    if (state->player_positions[player].car < state->cars - 1)
     {
-      state->player_positions[state->current_player].car += 1;
-      state->player_positions[state->current_player].x = 160;
+      state->player_positions[player].car += 1;
+      state->player_positions[player].x = 160;
     }
   }
-  else if (state->player_positions[state->current_player].x >= 160)
+  else if (state->player_positions[player].x >= 160)
   {
-    if (state->player_positions[state->current_player].car > 0)
+    if (state->player_positions[player].car > 0)
     {
-      state->player_positions[state->current_player].car -= 1;
-      state->player_positions[state->current_player].x = 20;
+      state->player_positions[player].car -= 1;
+      state->player_positions[player].x = 20;
     }
   }
 }
@@ -153,25 +157,22 @@ void draw_train_map(struct game_state *state)
   }
 }
 
-#define PLAYER_ARROW_SPRITE_START 8
-#define PLAYER_MAP_SPRITE_START 9
+#define PLAYER_MAP_SPRITE_START 8
 void draw_players_map(struct game_state *state)
 {
-  // current player arrow
-  move_sprite(PLAYER_ARROW_SPRITE_START, state->player_positions[state->current_player].x, 0);
   // all players logo
   for (uint8_t player = 0; player < MAX_PLAYERS; player++)
   {
-    move_sprite(PLAYER_MAP_SPRITE_START + player, 160 - (state->player_positions[player].car * 3 * 8), 16 + 16);
+    move_sprite(PLAYER_MAP_SPRITE_START + player, 160 - (state->player_positions[player].car * 3 * 8), PLATFORM_Y_ADJUST + 16);
   }
 }
 
-void draw_players(struct game_state *state)
+void draw_players(struct game_state *state, uint8_t current_player)
 {
   for (uint8_t player = 0; player < MAX_PLAYERS; player++)
   {
     // do not render players that are not in our car
-    if (player != state->current_player && state->player_positions[player].car != state->player_positions[state->current_player].car)
+    if (player != current_player && state->player_positions[player].car != state->player_positions[current_player].car)
     {
       hide_sprite(player_animations_const[player].sp_idx);
       continue;
@@ -180,13 +181,13 @@ void draw_players(struct game_state *state)
     if (state->player_positions[player].direction < 0)
     {
       animation_progress(&player_animations_const[player], &state->player_animations[player]);
-      move_sprite(player_animations_const[player].sp_idx, state->player_positions[player].x, state->player_positions[player].y);
+      move_sprite(player_animations_const[player].sp_idx, state->player_positions[player].x, PLATFORM_Y_ADJUST + state->player_positions[player].y);
       set_sprite_prop(player_animations_const[player].sp_idx, S_FLIPX);
     }
     else if (state->player_positions[player].direction > 0)
     {
       animation_progress(&player_animations_const[player], &state->player_animations[player]);
-      move_sprite(player_animations_const[player].sp_idx, state->player_positions[player].x, state->player_positions[player].y);
+      move_sprite(player_animations_const[player].sp_idx, state->player_positions[player].x, PLATFORM_Y_ADJUST + state->player_positions[player].y);
       set_sprite_prop(player_animations_const[player].sp_idx, 0);
     }
     else
@@ -219,6 +220,14 @@ void npc_action(struct game_state *state, uint8_t npc)
   }
 }
 
+#ifdef NINTENDO_NES
+#define GET_8x16_SPRITE_TILE(tile) (tile + 1)
+#else
+#define GET_8x16_SPRITE_TILE(tile) (tile) 
+#endif
+
+BANKREF_EXTERN(train_map_0)
+
 void main(void)
 {
   // init
@@ -228,20 +237,25 @@ void main(void)
   fill_bkg_rect(0, 0, 24, 16, 0);
 
   // bkg
+  SWITCH_ROM(BANK(train_map_0));
   set_bkg_data(TRAIN_MAP_CAR_TILE_START, train_map_0_TILE_COUNT, train_map_0_tiles);
 
-  // current player arrow
-  set_sprite_data(8, train_player_logo_arrow_TILE_COUNT, train_player_logo_arrow_tiles);
-  set_sprite_tile(PLAYER_ARROW_SPRITE_START, 8);
+  // player
+#define PLAYER_SPRITE_START 0
+  set_sprite_tile(PLAYER_SPRITE_START, GET_8x16_SPRITE_TILE(0));
+  set_sprite_tile(PLAYER_SPRITE_START + 1, GET_8x16_SPRITE_TILE(0));
+  set_sprite_tile(PLAYER_SPRITE_START + 2, GET_8x16_SPRITE_TILE(0));
+  set_sprite_tile(PLAYER_SPRITE_START + 3, GET_8x16_SPRITE_TILE(0));
+
   // all player logos
   set_sprite_data(10, train_player_logo_0_TILE_COUNT, train_player_logo_0_tiles);
-  set_sprite_tile(PLAYER_MAP_SPRITE_START + 0, 10);
+  set_sprite_tile(PLAYER_MAP_SPRITE_START + 0, GET_8x16_SPRITE_TILE(10));
   set_sprite_data(12, train_player_logo_1_TILE_COUNT, train_player_logo_1_tiles);
-  set_sprite_tile(PLAYER_MAP_SPRITE_START + 1, 12);
+  set_sprite_tile(PLAYER_MAP_SPRITE_START + 1, GET_8x16_SPRITE_TILE(12));
   set_sprite_data(14, train_player_logo_2_TILE_COUNT, train_player_logo_2_tiles);
-  set_sprite_tile(PLAYER_MAP_SPRITE_START + 2, 14);
+  set_sprite_tile(PLAYER_MAP_SPRITE_START + 2, GET_8x16_SPRITE_TILE(14));
   set_sprite_data(16, train_player_logo_3_TILE_COUNT, train_player_logo_3_tiles);
-  set_sprite_tile(PLAYER_MAP_SPRITE_START + 3, 16);
+  set_sprite_tile(PLAYER_MAP_SPRITE_START + 3, GET_8x16_SPRITE_TILE(16));
 
 #define RANDOM_START_POSITION (30 + (rand() % 100))
 #define RANDOM_DIRECTION (rand() < 128 ? -1 : 1)
@@ -265,10 +279,8 @@ void main(void)
 
   while (1)
   {
-    wait_vbl_done();
-
     // handle input
-    handle_input(&state);
+    handle_input(&state, 0);
 
     // npc input
     npc_action(&state, 1);
@@ -276,7 +288,8 @@ void main(void)
     npc_action(&state, 3);
 
     // render
-    draw_players(&state);
+    vsync();
+    draw_players(&state, 0);
     draw_players_map(&state);
   }
 }

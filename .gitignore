@@ -1,4 +1,6 @@
 *.gb
+*.nes
+*.rom
 *.map
 *.noi
 *.sav

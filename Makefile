@@ -1,7 +1,8 @@
-CC	= ../../bin/lcc -Wa-l -Wl-m -Wl-j
+CC	= ../../bin/lcc -Wa-l -Wl-j
 ROMUSAGE = ../../bin/romusage
 PNG2ASSET = ../../bin/png2asset
-BIN	= train-game.gb
+GB_BIN	= train-game.gb
+NES_BIN = train-game.nes
 ASSETS = conductor.png train_map_0.png train_player_logo_arrow.png train_player_logo_0.png train_player_logo_1.png train_player_logo_2.png train_player_logo_3.png
 ASSET_IN = assets
 ASSETS_DEP = $(addprefix assets/,$(ASSETS))
@@ -10,26 +11,35 @@ ASSETS_OUT = $(addprefix $(PNG2ASSET_OUT)/,$(ASSETS:.png=.c))
 SRCS_CORE = main.c
 SRCS = $(addprefix src/,$(SRCS_CORE)) $(ASSETS_OUT)
 
-all:	$(BIN)
+all:	$(GB_BIN) $(NES_BIN)
 
+ASSET_ARGS_COMMON = -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optimize
+ASSET_BANK_ARG = -b 1
 $(ASSETS_OUT): $(ASSETS_DEP)
-	$(PNG2ASSET) $(ASSET_IN)/conductor.png -o $(PNG2ASSET_OUT)/conductor.c -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optimize -b 1
-	$(PNG2ASSET) $(ASSET_IN)/train_map_0.png -o $(PNG2ASSET_OUT)/train_map_0.c -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optimize -b 1
-	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_arrow.png -o $(PNG2ASSET_OUT)/train_player_logo_arrow.c -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optimize -b 1
-	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_0.png -o $(PNG2ASSET_OUT)/train_player_logo_0.c -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optimize -b 1
-	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_1.png -o $(PNG2ASSET_OUT)/train_player_logo_1.c -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optimize -b 1
-	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_2.png -o $(PNG2ASSET_OUT)/train_player_logo_2.c -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optimize -b 1
-	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_3.png -o $(PNG2ASSET_OUT)/train_player_logo_3.c -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optimize -b 1
+	$(PNG2ASSET) $(ASSET_IN)/conductor.png -o $(PNG2ASSET_OUT)/conductor.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/train_map_0.png -o $(PNG2ASSET_OUT)/train_map_0.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_arrow.png -o $(PNG2ASSET_OUT)/train_player_logo_arrow.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_0.png -o $(PNG2ASSET_OUT)/train_player_logo_0.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_1.png -o $(PNG2ASSET_OUT)/train_player_logo_1.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_2.png -o $(PNG2ASSET_OUT)/train_player_logo_2.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_3.png -o $(PNG2ASSET_OUT)/train_player_logo_3.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 
 compile.bat: Makefile
 	@echo "REM Automatically generated from Makefile" > compile.bat
 	@make -sn | sed y/\\//\\\\/ | grep -v make >> compile.bat
 
-$(BIN):	$(SRCS)
-	$(CC) -o $(BIN) $(SRCS)
+$(GB_BIN):	$(SRCS)
+	$(CC) -msm83:gb -o $(GB_BIN) $(SRCS)
+
+$(NES_BIN): $(SRCS)
+	$(CC) -mmos6502:nes -o $(NES_BIN) $(SRCS)
+
+NES_EMULATOR = C:\Users\jgens\Downloads\Mesen_2.1.1_Windows\Mesen.exe
+run-nes:
+	$(NES_EMULATOR) $(NES_BIN)
 
 clean:
 	rm -f *.o *.lst *.map *.gb *~ *.rel *.cdb *.ihx *.lnk *.sym *.asm *.noi $(PNG2ASSET_OUT)/*.c $(PNG2ASSET_OUT)/*.h
 
 usage:
-	$(ROMUSAGE) $(BIN)
+	$(ROMUSAGE) $(GB_BIN)
