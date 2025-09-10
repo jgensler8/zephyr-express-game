@@ -485,7 +485,7 @@ void maybe_create_tasks(struct game_state *state)
       state->tasks[tool][task].x = RANDOM_X_POSITION;
       state->tasks[tool][task].y = 80 - 16;
       state->tasks[tool][task].progress = 10;
-      ` state->open_task_count++;
+      state->open_task_count++;
       return;
     }
   }
