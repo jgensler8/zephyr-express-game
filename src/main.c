@@ -24,6 +24,9 @@
 #define GET_8x16_SPRITE_TILE(tile) (tile)
 #endif
 
+#define RANDOM_X_POSITION (30 + (rand() % 100))
+
+#define ANIMATION_MAX_FRAMES 5
 struct animation_const
 {
   uint8_t sp_idx;
@@ -31,7 +34,7 @@ struct animation_const
   uint8_t frames;
   uint8_t neutral_frame;
   uint8_t data_tile_count;
-  uint8_t *frame_datas[3];
+  uint8_t *frame_datas[ANIMATION_MAX_FRAMES];
   uint8_t frame_wait;
 };
 
@@ -71,13 +74,24 @@ struct tool
   uint8_t player_holding;
 };
 
+struct task
+{
+  uint8_t car;
+  uint8_t x;
+  uint8_t y;
+  uint8_t progress;
+};
+
 #define MAX_PLAYERS 4
+#define MAX_TASKS_PER_TOOL 2
 struct game_state
 {
   uint8_t cars;
   struct player_position player_positions[MAX_PLAYERS];
   struct animation_state player_animations[MAX_PLAYERS];
   struct tool tools[TOOL_COUNT];
+  uint8_t open_task_count;
+  struct task tasks[TOOL_COUNT][MAX_TASKS_PER_TOOL];
 };
 
 uint8_t j0_a_pressed = 0;
@@ -104,7 +118,7 @@ uint8_t tool_held(struct game_state *state, uint8_t player)
 }
 uint8_t tool_near(struct game_state *state, enum TOOL_TYPE tool, uint8_t player)
 {
-  uint8_t nearness_margin_x = 8;
+  uint8_t nearness_margin_x = 16;
   uint8_t nearness_margin_y = 16;
   return state->tools[tool].x >= state->player_positions[player].x - nearness_margin_x &&
          state->tools[tool].x <= state->player_positions[player].x + nearness_margin_x &&
@@ -114,6 +128,7 @@ uint8_t tool_near(struct game_state *state, enum TOOL_TYPE tool, uint8_t player)
 void handle_input(struct game_state *state, uint8_t player)
 {
   uint8_t joy = joypad();
+  // directional movment
   if (joy & J_LEFT)
   {
     if (state->player_positions[player].x > 8)
@@ -134,6 +149,8 @@ void handle_input(struct game_state *state, uint8_t player)
   {
     state->player_positions[player].direction = 0;
   }
+
+  // car teleports
   if (state->player_positions[player].x <= 20)
   {
 
@@ -161,6 +178,7 @@ void handle_input(struct game_state *state, uint8_t player)
     uint8_t held = tool_held(state, player);
     if (held != TOOL_NONE)
     {
+      // TODO: if near task
       // drop tool
       state->tools[held].player_holding = PLAYER_HOLDING_NONE;
     }
@@ -178,11 +196,13 @@ void handle_input(struct game_state *state, uint8_t player)
           {
             state->tools[tool].player_holding = player;
             // state->tools[tool].y -= 16;
+            break;
           }
           else if (state->tools[tool].player_holding == player)
           {
             state->tools[tool].player_holding = PLAYER_HOLDING_NONE;
             // state->tools[tool].y += 16;
+            break;
           }
         }
       }
@@ -357,6 +377,62 @@ void draw_tools(struct game_state *state, uint8_t current_player)
   }
 }
 
+#define TASK_SPRITE_START 18
+#define TASK_DATA_START 30
+void intitialize_tasks(void)
+{
+  for (uint8_t tool = 0; tool < TOOL_COUNT; tool++)
+  {
+    uint8_t data_start = TASK_DATA_START + tool * 2;
+    // TODO: swap tool sprite with task sprite
+    switch (tool)
+    {
+    case TOOL_WIFI:
+      set_sprite_data(data_start, tool_wifi_TILE_COUNT, tool_wifi_tiles);
+      break;
+    case TOOL_WRENCH:
+      set_sprite_data(data_start, tool_wrench_TILE_COUNT, tool_wrench_tiles);
+      break;
+    case TOOL_DRINK:
+      set_sprite_data(data_start, tool_drink_TILE_COUNT, tool_drink_tiles);
+      break;
+    case TOOL_CAT:
+      set_sprite_data(data_start, tool_cat_TILE_COUNT, tool_cat_tiles);
+      break;
+    case TOOL_MUSIC:
+      set_sprite_data(data_start, tool_music_TILE_COUNT, tool_music_tiles);
+      break;
+    }
+    for (uint8_t task = 0; task < MAX_TASKS_PER_TOOL; task++)
+    {
+      uint8_t sprite_start = TASK_SPRITE_START + tool * MAX_TASKS_PER_TOOL + task;
+      set_sprite_tile(sprite_start, GET_8x16_SPRITE_TILE(data_start));
+    }
+  }
+}
+
+void draw_tasks(struct game_state *state, uint8_t current_player)
+{
+  for (uint8_t tool = 0; tool < TOOL_COUNT; tool++)
+  {
+    for (uint8_t task = 0; task < MAX_TASKS_PER_TOOL; task++)
+    {
+      if (state->tasks[tool][task].progress > 0)
+      {
+        uint8_t sprite = TASK_SPRITE_START + tool * MAX_TASKS_PER_TOOL + task;
+        if (state->tasks[tool][task].car != state->player_positions[current_player].car)
+        {
+          hide_sprite(sprite);
+        }
+        else
+        {
+          move_sprite(sprite, state->tasks[tool][task].x, PLATFORM_Y_ADJUST + state->tasks[tool][task].y);
+        }
+      }
+    }
+  }
+}
+
 void npc_action(struct game_state *state, uint8_t npc)
 {
   // move npc
@@ -380,6 +456,41 @@ void npc_action(struct game_state *state, uint8_t npc)
   }
 }
 
+void maybe_create_tasks(struct game_state *state)
+{
+  if (state->open_task_count > 3)
+  {
+    return;
+  }
+  // pick random unlocked tool
+  uint8_t tool = rand() % TOOL_COUNT;
+  uint8_t iters = 0;
+  while (!state->tools[tool].unlocked && iters < TOOL_COUNT)
+  {
+    tool = (tool + 1) % TOOL_COUNT;
+    iters++;
+  }
+
+  for (uint8_t task = 0; task < MAX_TASKS_PER_TOOL; task++)
+  {
+    if (state->tasks[tool][task].progress == 0)
+    {
+      // create task
+      uint8_t not_same_car = rand() % state->cars;
+      if (not_same_car == state->tools[tool].car)
+      {
+        not_same_car = (not_same_car + 1) % state->cars;
+      }
+      state->tasks[tool][task].car = not_same_car;
+      state->tasks[tool][task].x = RANDOM_X_POSITION;
+      state->tasks[tool][task].y = 80 - 16;
+      state->tasks[tool][task].progress = 10;
+      ` state->open_task_count++;
+      return;
+    }
+  }
+}
+
 BANKREF_EXTERN(train_map_0)
 
 void main(void)
@@ -399,16 +510,17 @@ void main(void)
   initialize_players();
   // tools
   initialize_tools();
+  // tasks
+  intitialize_tasks();
 
-#define RANDOM_START_POSITION (30 + (rand() % 100))
 #define RANDOM_DIRECTION (rand() < 128 ? -1 : 1)
   struct game_state state = {
       .cars = 2,
       .player_positions = {
           {.car = 0, .x = 80, .y = 80, .direction = 0},
-          {.car = 1, .x = RANDOM_START_POSITION, .y = 80, .direction = RANDOM_DIRECTION},
-          {.car = 1, .x = RANDOM_START_POSITION, .y = 80, .direction = RANDOM_DIRECTION},
-          {.car = 1, .x = RANDOM_START_POSITION, .y = 80, .direction = RANDOM_DIRECTION},
+          {.car = 1, .x = RANDOM_X_POSITION, .y = 80, .direction = RANDOM_DIRECTION},
+          {.car = 1, .x = RANDOM_X_POSITION, .y = 80, .direction = RANDOM_DIRECTION},
+          {.car = 1, .x = RANDOM_X_POSITION, .y = 80, .direction = RANDOM_DIRECTION},
       },
       .player_animations = {
           {.frame = 1, .direction = 1, .frame_tick = 0},
@@ -448,10 +560,13 @@ void main(void)
     npc_action(&state, 2);
     npc_action(&state, 3);
 
+    maybe_create_tasks(&state);
+
     // render
     vsync();
     draw_players(&state, 0);
     draw_players_map(&state);
     draw_tools(&state, 0);
+    draw_tasks(&state, 0);
   }
 }
