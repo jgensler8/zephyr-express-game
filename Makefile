@@ -20,7 +20,7 @@ ASSET_ARGS_BKG = -noflip -bpp 2 -spr8x8 -keep_palette_order -sprite_no_optimize
 ASSET_BANK_ARG = -b 1
 $(ASSETS_OUT): $(ASSETS_DEP)
 	$(PNG2ASSET) $(ASSET_IN)/conductor.png -o $(PNG2ASSET_OUT)/conductor.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
-	$(PNG2ASSET) $(ASSET_IN)/train_map_0.png -o $(PNG2ASSET_OUT)/train_map_0.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/train_map_0.png -o $(PNG2ASSET_OUT)/train_map_0.c $(ASSET_ARGS_BKG) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_arrow.png -o $(PNG2ASSET_OUT)/train_player_logo_arrow.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_0.png -o $(PNG2ASSET_OUT)/train_player_logo_0.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/train_player_logo_1.png -o $(PNG2ASSET_OUT)/train_player_logo_1.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)

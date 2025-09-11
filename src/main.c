@@ -12,10 +12,14 @@
 #include "gen/tool_cat.h"
 #include "gen/tool_music.h"
 #include "gen/bg_train_passenger.h"
+#define TRAIN_CAR_LEN bg_train_passenger_WIDTH
+#define TRAIN_DOOR_TELEPORT_MARGIN 4
 
 #ifdef NINTENDO_NES
+#define PLATFORM_X_ADJUST 0
 #define PLATFORM_Y_ADJUST 0
 #else
+#define PLATFORM_X_ADJUST 8
 #define PLATFORM_Y_ADJUST 16
 #endif
 
@@ -93,8 +97,10 @@ struct task
 
 // #define MAX_PLAYERS
 #ifdef NINTENDO_NES
-#define MAX_PLAYERS 2
-#define MAX_NPCS 2
+// #define MAX_PLAYERS 2
+// #define MAX_NPCS 2
+#define MAX_PLAYERS 4
+#define MAX_NPCS 0
 #define MAX_PLAYABLES (MAX_PLAYERS + MAX_NPCS)
 #else
 #define MAX_PLAYERS 1
@@ -152,7 +158,7 @@ void handle_input(struct game_state *state, uint8_t player)
   // directional movment
   if (joy & J_LEFT)
   {
-    if (state->player_positions[player].x > 8)
+    if (state->player_positions[player].x > 0)
     {
       state->player_positions[player].x -= 1;
     }
@@ -160,7 +166,7 @@ void handle_input(struct game_state *state, uint8_t player)
   }
   else if (joy & J_RIGHT)
   {
-    if (state->player_positions[player].x < 160)
+    if (state->player_positions[player].x < TRAIN_CAR_LEN)
     {
       state->player_positions[player].x += 1;
     }
@@ -172,22 +178,22 @@ void handle_input(struct game_state *state, uint8_t player)
   }
 
   // car teleports
-  if (state->player_positions[player].x <= 20)
+  if (state->player_positions[player].x < TRAIN_DOOR_TELEPORT_MARGIN)
   {
 
-    if (state->player_positions[player].car < state->cars - 1)
-    {
-      state->player_positions[player].car += 1;
-      state->player_positions[player].x = 160;
-      update_tool_cars(state);
-    }
-  }
-  else if (state->player_positions[player].x >= 160)
-  {
     if (state->player_positions[player].car > 0)
     {
       state->player_positions[player].car -= 1;
-      state->player_positions[player].x = 20;
+      state->player_positions[player].x = TRAIN_CAR_LEN - TRAIN_DOOR_TELEPORT_MARGIN;
+      update_tool_cars(state);
+    }
+  }
+  else if (state->player_positions[player].x > TRAIN_CAR_LEN - TRAIN_DOOR_TELEPORT_MARGIN)
+  {
+    if (state->player_positions[player].car < state->cars - 1)
+    {
+      state->player_positions[player].car += 1;
+      state->player_positions[player].x = TRAIN_DOOR_TELEPORT_MARGIN;
       update_tool_cars(state);
     }
   }
@@ -263,19 +269,27 @@ void animation_idle(const struct animation_const *data, struct animation_state *
   state->direction = 1;
   set_sprite_data(data->data_idx, data->data_tile_count, data->frame_datas[state->frame]);
 }
-
+#define TRAIN_MAP_BG_X_START 1
 #define TRAIN_MAP_CAR_TILE_START 1
+void initialize_train_map(void)
+{
+  set_bkg_data(TRAIN_MAP_CAR_TILE_START, train_map_0_TILE_COUNT, train_map_0_tiles);
+}
+
 void draw_train_map(struct game_state *state)
 {
-  // draw cars right to left
-  for (uint8_t cars = 0; cars < state->cars; cars++)
+  // draw cars left to right
+  for (uint8_t car = 0; car < state->cars; car++)
   {
-    set_bkg_tile_xy(17 - (cars * 3), 0, TRAIN_MAP_CAR_TILE_START);
-    set_bkg_tile_xy(18 - (cars * 3), 0, TRAIN_MAP_CAR_TILE_START + 2);
-    set_bkg_tile_xy(19 - (cars * 3), 0, TRAIN_MAP_CAR_TILE_START + 4);
-    set_bkg_tile_xy(17 - (cars * 3), 1, TRAIN_MAP_CAR_TILE_START + 1);
-    set_bkg_tile_xy(18 - (cars * 3), 1, TRAIN_MAP_CAR_TILE_START + 3);
-    set_bkg_tile_xy(19 - (cars * 3), 1, TRAIN_MAP_CAR_TILE_START + 5);
+    uint8_t tile = 0;
+    for (uint8_t t_y = 0; t_y < (train_map_0_HEIGHT / 8); t_y++)
+    {
+      for (uint8_t t_x = 0; t_x < (train_map_0_WIDTH / 8); t_x++)
+      {
+        set_bkg_tile_xy(TRAIN_MAP_BG_X_START + t_x + car * 3, t_y, TRAIN_MAP_CAR_TILE_START + tile);
+        tile++;
+      }
+    }
   }
 }
 
@@ -293,12 +307,30 @@ void initialize_players_map(void)
   set_sprite_tile(PLAYER_MAP_SPRITE_START + 3, GET_8x16_SPRITE_TILE(6));
 }
 
+// 4 pixels is the width of the map sprite so it can only travel 0-20
+// >>> ",".join(map(str, [round(i*(24-4)/128) for i in range(128)] ))
+const uint8_t car_ratio_lookup_table[128] = {
+    0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13, 13, 13, 14, 14, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 15, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 20, 20, 20};
+
+uint8_t approx_car_ratio_lookup(uint8_t x)
+{
+  if (x >= 128)
+  {
+    return car_ratio_lookup_table[127];
+  }
+  return car_ratio_lookup_table[x];
+}
+
 void draw_players_map(struct game_state *state)
 {
   // all players logo
   for (uint8_t player = 0; player < MAX_PLAYABLES; player++)
   {
-    move_sprite(PLAYER_MAP_SPRITE_START + player, 160 - (state->player_positions[player].car * 3 * 8), PLATFORM_Y_ADJUST + 16);
+    uint8_t car_x_start = TRAIN_MAP_BG_X_START * 8 + (state->player_positions[player].car * 24);
+    uint8_t car_x_ratio = approx_car_ratio_lookup(state->player_positions[player].x);
+    // sprites were originally design to fit in a single line
+    uint8_t shifted_y = player == 0 ? 0 : player == 1 ? 4 : player == 2 ? 4 : 8;
+    move_sprite(PLAYER_MAP_SPRITE_START + player, PLATFORM_X_ADJUST + car_x_start + car_x_ratio, PLATFORM_Y_ADJUST + shifted_y);
   }
 }
 
@@ -414,7 +446,7 @@ void draw_players(struct game_state *state, uint8_t current_player)
     // always move sprite to make it visible
     move_sprite(
         player_animations_const[current_player][player].sp_idx,
-        PLAYER_X_ADJUST(current_player) + state->player_positions[player].x,
+        PLAYER_X_ADJUST(current_player) + PLATFORM_X_ADJUST + state->player_positions[player].x,
         PLAYER_Y_ADJUST(current_player) + PLATFORM_Y_ADJUST + state->player_positions[player].y);
     // progress animation
     if (state->player_positions[player].direction < 0)
@@ -494,16 +526,26 @@ void draw_tasks(struct game_state *state, uint8_t current_player)
 #define BG_TRAIN_START 8
 #define BG_START_TILE_X 0
 #define BG_START_TILE_Y 3
+#define BG_TILE_PLAYER_X(player) ((player == 0 || player == 2) ? 0 : 0)
+#define BG_TILE_PLAYER_Y(player) (player == 0 ? 0 : player == 1 ? 7  \
+                                                : player == 2   ? 14 \
+                                                                : 21)
 void initialize_bg_train()
 {
   set_bkg_data(BG_TRAIN_START, bg_train_passenger_TILE_COUNT, bg_train_passenger_tiles);
-  uint8_t tile = BG_TRAIN_START;
-  for (uint8_t t_y = 0; t_y < (bg_train_passenger_HEIGHT / 8); t_y++)
+  for (uint8_t player = 0; player < MAX_PLAYERS; player++)
   {
-    for (uint8_t t_x = 0; t_x < (bg_train_passenger_WIDTH / 8); t_x++)
+    uint8_t tile = BG_TRAIN_START;
+    for (uint8_t t_y = 0; t_y < (bg_train_passenger_HEIGHT / 8); t_y++)
     {
-      set_bkg_tile_xy(BG_START_TILE_X + t_x, BG_START_TILE_Y + t_y, tile);
-      tile++;
+      for (uint8_t t_x = 0; t_x < (bg_train_passenger_WIDTH / 8); t_x++)
+      {
+        set_bkg_tile_xy(
+            BG_TILE_PLAYER_X(player) + BG_START_TILE_X + t_x,
+            BG_TILE_PLAYER_Y(player) + BG_START_TILE_Y + t_y,
+            tile);
+        tile++;
+      }
     }
   }
 }
@@ -579,7 +621,7 @@ void main(void)
 
   // train map
   SWITCH_ROM(BANK(train_map_0));
-  set_bkg_data(TRAIN_MAP_CAR_TILE_START, train_map_0_TILE_COUNT, train_map_0_tiles);
+  initialize_train_map();
   // player map logo
   initialize_players_map();
   // player sprite

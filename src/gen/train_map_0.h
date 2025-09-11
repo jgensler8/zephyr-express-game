@@ -8,7 +8,7 @@
 
 #define train_map_0_TILE_ORIGIN 0
 #define train_map_0_TILE_W 8
-#define train_map_0_TILE_H 16
+#define train_map_0_TILE_H 8
 #define train_map_0_WIDTH 24
 #define train_map_0_HEIGHT 16
 #define train_map_0_TILE_COUNT 6

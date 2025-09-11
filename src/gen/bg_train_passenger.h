@@ -9,21 +9,21 @@
 #define bg_train_passenger_TILE_ORIGIN 0
 #define bg_train_passenger_TILE_W 8
 #define bg_train_passenger_TILE_H 8
-#define bg_train_passenger_WIDTH 120
-#define bg_train_passenger_HEIGHT 64
-#define bg_train_passenger_TILE_COUNT 120
+#define bg_train_passenger_WIDTH 128
+#define bg_train_passenger_HEIGHT 56
+#define bg_train_passenger_TILE_COUNT 112
 #define bg_train_passenger_PALETTE_COUNT 1
 #define bg_train_passenger_COLORS_PER_PALETTE 4
 #define bg_train_passenger_TOTAL_COLORS 4
-#define bg_train_passenger_PIVOT_X 60
-#define bg_train_passenger_PIVOT_Y 32
-#define bg_train_passenger_PIVOT_W 120
-#define bg_train_passenger_PIVOT_H 64
+#define bg_train_passenger_PIVOT_X 64
+#define bg_train_passenger_PIVOT_Y 28
+#define bg_train_passenger_PIVOT_W 128
+#define bg_train_passenger_PIVOT_H 56
 extern const metasprite_t* const bg_train_passenger_metasprites[1];
 
 BANKREF_EXTERN(bg_train_passenger)
 
 extern const palette_color_t bg_train_passenger_palettes[4];
-extern const uint8_t bg_train_passenger_tiles[1920];
+extern const uint8_t bg_train_passenger_tiles[1792];
 
 #endif
