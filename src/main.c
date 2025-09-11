@@ -11,6 +11,7 @@
 #include "gen/tool_drink.h"
 #include "gen/tool_cat.h"
 #include "gen/tool_music.h"
+#include "gen/bg_train_passenger.h"
 
 #ifdef NINTENDO_NES
 #define PLATFORM_Y_ADJUST 0
@@ -490,6 +491,23 @@ void draw_tasks(struct game_state *state, uint8_t current_player)
   }
 }
 
+#define BG_TRAIN_START 8
+#define BG_START_TILE_X 0
+#define BG_START_TILE_Y 3
+void initialize_bg_train()
+{
+  set_bkg_data(BG_TRAIN_START, bg_train_passenger_TILE_COUNT, bg_train_passenger_tiles);
+  uint8_t tile = BG_TRAIN_START;
+  for (uint8_t t_y = 0; t_y < (bg_train_passenger_HEIGHT / 8); t_y++)
+  {
+    for (uint8_t t_x = 0; t_x < (bg_train_passenger_WIDTH / 8); t_x++)
+    {
+      set_bkg_tile_xy(BG_START_TILE_X + t_x, BG_START_TILE_Y + t_y, tile);
+      tile++;
+    }
+  }
+}
+
 void npc_replace_input(struct game_state *state, uint8_t npc)
 {
   // change directions
@@ -570,6 +588,8 @@ void main(void)
   initialize_tools();
   // tasks
   intitialize_tasks();
+  // bg
+  initialize_bg_train();
 
   struct game_state state = {
       .cars = 2,
