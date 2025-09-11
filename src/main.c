@@ -13,6 +13,7 @@
 #include "gen/tool_music.h"
 #include "gen/bg_train_passenger.h"
 #define TRAIN_CAR_LEN bg_train_passenger_WIDTH
+#define TRAIN_CAR_HEIGHT bg_train_passenger_HEIGHT
 #define TRAIN_DOOR_TELEPORT_MARGIN 4
 
 #ifdef NINTENDO_NES
@@ -30,8 +31,10 @@
 #endif
 
 #ifdef NINTENDO_NES
-#define PLAYER_X_ADJUST(current_player) ((current_player == 0 || current_player == 2) ? 0 : 120)
-#define PLAYER_Y_ADJUST(current_player) ((current_player == 0 || current_player == 1) ? 0 : 80)
+// #define PLAYER_X_ADJUST(current_player) ((current_player == 0 || current_player == 2) ? 0 : 120)
+#define PLAYER_X_ADJUST(current_player) (0)
+uint8_t _player_y_adjust[4] = {TRAIN_CAR_HEIGHT*0, TRAIN_CAR_HEIGHT*1, TRAIN_CAR_HEIGHT*2, TRAIN_CAR_HEIGHT*3};
+#define PLAYER_Y_ADJUST(current_player) (_player_y_adjust[current_player])
 #else
 #define PLAYER_X_ADJUST(current_player) (0)
 #define PLAYER_Y_ADJUST(current_player) (0)
@@ -328,9 +331,11 @@ void draw_players_map(struct game_state *state)
   {
     uint8_t car_x_start = TRAIN_MAP_BG_X_START * 8 + (state->player_positions[player].car * 24);
     uint8_t car_x_ratio = approx_car_ratio_lookup(state->player_positions[player].x);
-    // sprites were originally design to fit in a single line
+    // sprites were originally design to fit in a single 8x8 square
+    // lets keep the sprites that way and adjust in code
     uint8_t shifted_y = player == 0 ? 0 : player == 1 ? 4 : player == 2 ? 4 : 8;
-    move_sprite(PLAYER_MAP_SPRITE_START + player, PLATFORM_X_ADJUST + car_x_start + car_x_ratio, PLATFORM_Y_ADJUST + shifted_y);
+    uint8_t shifted_x = (player == 0 || player == 2) ? 0 : -4;
+    move_sprite(PLAYER_MAP_SPRITE_START + player, PLATFORM_X_ADJUST + car_x_start + car_x_ratio + shifted_x, PLATFORM_Y_ADJUST + shifted_y);
   }
 }
 
@@ -525,7 +530,7 @@ void draw_tasks(struct game_state *state, uint8_t current_player)
 
 #define BG_TRAIN_START 8
 #define BG_START_TILE_X 0
-#define BG_START_TILE_Y 3
+#define BG_START_TILE_Y 2
 #define BG_TILE_PLAYER_X(player) ((player == 0 || player == 2) ? 0 : 0)
 #define BG_TILE_PLAYER_Y(player) (player == 0 ? 0 : player == 1 ? 7  \
                                                 : player == 2   ? 14 \
@@ -636,10 +641,10 @@ void main(void)
   struct game_state state = {
       .cars = 2,
       .player_positions = {
-          {.car = 0, .x = 80, .y = 80, .direction = 0},
-          {.car = 1, .x = RANDOM_X_POSITION, .y = 80, .direction = 0},
-          {.car = 1, .x = RANDOM_X_POSITION, .y = 80, .direction = -1},
-          {.car = 0, .x = RANDOM_X_POSITION, .y = 80, .direction = 1},
+          {.car = 0, .x = 80, .y = 24, .direction = 0},
+          {.car = 1, .x = RANDOM_X_POSITION, .y = 24, .direction = 0},
+          {.car = 1, .x = RANDOM_X_POSITION, .y = 24, .direction = -1},
+          {.car = 0, .x = RANDOM_X_POSITION, .y = 24, .direction = 1},
       },
 #define PLAYER_ANIMATION_INIT {.frame = 1, .direction = 1, .frame_tick = 0}
 #define PLAYER_ANIMATIONS_INIT {PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT}
@@ -650,7 +655,7 @@ void main(void)
               .unlocked = 1,
               .car = 0,
               .x = 100,
-              .y = 80,
+              .y = 24,
               .player_holding = PLAYER_HOLDING_NONE,
           },
           // TOOL_WRENCH
@@ -658,7 +663,7 @@ void main(void)
               .unlocked = 1,
               .car = 1,
               .x = 100,
-              .y = 80,
+              .y = 24,
               .player_holding = PLAYER_HOLDING_NONE,
           },
       },
