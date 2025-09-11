@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src",
-                "C:/Users/jgens/Downloads/gbdk-win64/gbdk/include"
+                "C:/Users/jgens/Downloads/gbdk-win64/gbdk/include",
+                "C:/Users/jgens/Downloads/gbdk/include"
             ],
             "defines": [
                 "_DEBUG",

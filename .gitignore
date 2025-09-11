@@ -4,4 +4,5 @@
 *.map
 *.noi
 *.sav
+*.sym
 assets/*.png
