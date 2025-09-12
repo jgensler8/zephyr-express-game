@@ -5,7 +5,7 @@ GB_BIN	= train-game.gb
 NES_BIN = train-game.nes
 ASSETS_TOOLS = tool_wifi.png tool_wrench.png tool_drink.png tool_cat.png tool_music.png
 ASSETS_PLAYER_LOGOS = train_player_logo_0.png train_player_logo_1.png train_player_logo_2.png train_player_logo_3.png
-ASSETS = conductor.png train_map_0.png train_player_logo_arrow.png bg_train_passenger.png $(ASSETS_TOOLS) $(ASSETS_PLAYER_LOGOS)
+ASSETS = conductor.png train_map_0.png train_player_logo_arrow.png bg_train_passenger.png task_sprite_modifier.png $(ASSETS_TOOLS) $(ASSETS_PLAYER_LOGOS)
 ASSET_IN = assets
 ASSETS_DEP = $(addprefix assets/,$(ASSETS))
 PNG2ASSET_OUT = src/gen
@@ -31,6 +31,7 @@ $(ASSETS_OUT): $(ASSETS_DEP)
 	$(PNG2ASSET) $(ASSET_IN)/tool_drink.png -o $(PNG2ASSET_OUT)/tool_drink.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/tool_cat.png -o $(PNG2ASSET_OUT)/tool_cat.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/tool_music.png -o $(PNG2ASSET_OUT)/tool_music.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/task_sprite_modifier.png -o $(PNG2ASSET_OUT)/task_sprite_modifier.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/bg_train_passenger.png -o $(PNG2ASSET_OUT)/bg_train_passenger.c $(ASSET_ARGS_BKG) $(ASSET_BANK_ARG)
 
 compile.bat: Makefile
