@@ -102,6 +102,7 @@ struct tool
   uint8_t player_holding;
 };
 
+#define TASK_PROGRESS_INIT 120
 struct task
 {
   uint8_t car;
@@ -126,6 +127,7 @@ struct task
 struct game_state
 {
   uint8_t cars;
+  uint8_t round_score;
   struct player_position player_positions[MAX_PLAYABLES];
   struct animation_state player_animations[MAX_PLAYABLES];
   struct tool tools[TOOL_COUNT];
@@ -308,7 +310,6 @@ void handle_input(struct game_state *state, uint8_t player)
     uint8_t held = tool_held(state, player);
     if (held != TOOL_NONE)
     {
-      // TODO: if near task
       // drop tool
       state->tools[held].player_holding = PLAYER_HOLDING_NONE;
       state->tools[held].y += TOOL_RAISE_PIXELS;
@@ -655,19 +656,16 @@ void draw_tasks(struct game_state *state, uint8_t current_player)
   {
     for (uint8_t task = 0; task < MAX_TASKS_PER_TOOL; task++)
     {
-      if (state->tasks[tool][task].progress > 0)
+      uint8_t sprite = TASK_SPRITE_START + tool * MAX_TASKS_PER_TOOL + task;
+      if (state->tasks[tool][task].progress == 0 || state->tasks[tool][task].car != state->player_positions[current_player].car)
       {
-        uint8_t sprite = TASK_SPRITE_START + tool * MAX_TASKS_PER_TOOL + task;
-        if (state->tasks[tool][task].car != state->player_positions[current_player].car)
-        {
-          hide_sprite(sprite);
-        }
-        else
-        {
-          move_sprite(sprite, state->tasks[tool][task].x, PLATFORM_Y_ADJUST + state->tasks[tool][task].y);
-          // animate the task sprite modifier
-          set_sprite_tile(sprite, GET_8x16_SPRITE_TILE(TASK_DATA_START + tool * 4 + task_sprite_modifier_frame * 2));
-        }
+        hide_sprite(sprite);
+      }
+      else
+      {
+        move_sprite(sprite, state->tasks[tool][task].x, PLATFORM_Y_ADJUST + state->tasks[tool][task].y);
+        // animate the task sprite modifier
+        set_sprite_tile(sprite, GET_8x16_SPRITE_TILE(TASK_DATA_START + tool * 4 + task_sprite_modifier_frame * 2));
       }
     }
   }
@@ -730,6 +728,38 @@ void npc_replace_input(struct game_state *state, uint8_t npc)
   }
 }
 
+#define TASK_MARGIN 8
+void handle_task_progress(struct game_state *state)
+{
+  for (enum TOOL tool = 0; tool < TOOL_COUNT; tool++)
+  {
+    // skip inactive tools
+    if (!state->tools[tool].unlocked && state->tools[tool].player_holding == PLAYER_HOLDING_NONE)
+    {
+      continue;
+    }
+    for (uint8_t task = 0; task < MAX_TASKS_PER_TOOL; task++)
+    {
+      if (state->tasks[tool][task].progress > 0)
+      {
+        // tool close to task
+        uint8_t diff_x = state->tools[tool].x - state->tasks[tool][task].x;
+        uint8_t diff_y = state->tools[tool].y - state->tasks[tool][task].y;
+        if ((diff_x < TASK_MARGIN || 255 - TASK_MARGIN < diff_x) && (diff_y < TASK_MARGIN || 255 - TASK_MARGIN < diff_y))
+        {
+          state->tasks[tool][task].progress -= 1;
+          // handle completed task
+          if (state->tasks[tool][task].progress == 0)
+          {
+            state->round_score += 1;
+            state->open_task_count -= 1;
+          }
+        }
+      }
+    }
+  }
+}
+
 void maybe_create_tasks(struct game_state *state)
 {
   if (state->open_task_count > 3)
@@ -758,7 +788,7 @@ void maybe_create_tasks(struct game_state *state)
       state->tasks[tool][task].car = not_same_car;
       state->tasks[tool][task].x = RANDOM_LOWER_FLOOR_POSITION;
       state->tasks[tool][task].y = TRAIN_LOWER_FLOOR;
-      state->tasks[tool][task].progress = 10;
+      state->tasks[tool][task].progress = TASK_PROGRESS_INIT;
       state->open_task_count++;
       return;
     }
@@ -792,23 +822,26 @@ void main(void)
 
   struct game_state state = {
       .cars = 2,
-#define START_POSITION_LEFT 8
-#define START_POSITION_RIGHT (TRAIN_CAR_LEN - 8)
+      .round_score = 0,
+#define PLAYER_START_POSITION_LEFT 8
+#define PLAYER_START_POSITION_RIGHT (TRAIN_CAR_LEN - 8)
       .player_positions = {
-          {.car = 0, .x = START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = 0},
-          {.car = 0, .x = START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 0},
-          {.car = 1, .x = START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = -1},
-          {.car = 1, .x = START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 1},
+          {.car = 0, .x = PLAYER_START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = 0},
+          {.car = 0, .x = PLAYER_START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 0},
+          {.car = 1, .x = PLAYER_START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = -1},
+          {.car = 1, .x = PLAYER_START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 1},
       },
 #define PLAYER_ANIMATION_INIT {.frame = 1, .direction = 1, .frame_tick = 0}
 #define PLAYER_ANIMATIONS_INIT {PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT}
       .player_animations = PLAYER_ANIMATIONS_INIT,
+#define TOOL_START_POSITION_LEFT 12
+#define TOOL_START_POSITION_RIGHT (TRAIN_CAR_LEN - 12)
       .tools = {
           // TOOL_WIFI
           {
               .unlocked = 1,
               .car = 0,
-              .x = 100,
+              .x = TOOL_START_POSITION_RIGHT,
               .y = TRAIN_FLOOR_BASELINE,
               .player_holding = PLAYER_HOLDING_NONE,
           },
@@ -816,7 +849,7 @@ void main(void)
           {
               .unlocked = 1,
               .car = 1,
-              .x = 100,
+              .x = TOOL_START_POSITION_LEFT,
               .y = TRAIN_FLOOR_BASELINE,
               .player_holding = PLAYER_HOLDING_NONE,
           },
@@ -838,6 +871,7 @@ void main(void)
       handle_input(&state, player);
     }
 
+    handle_task_progress(&state);
     maybe_create_tasks(&state);
 
     // render
