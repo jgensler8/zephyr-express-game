@@ -111,12 +111,18 @@ struct task
   uint8_t progress;
 };
 
+// 4 player sprites
+// 5 tools
+// 10 tasks
+#define SPRITES_PER_PLAYER (19)
+
 // #define MAX_PLAYERS
 #ifdef NINTENDO_NES
-// #define MAX_PLAYERS 2
-// #define MAX_NPCS 2
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 #define MAX_NPCS 0
+// #define MAX_NPCS 0
+// #define MAX_PLAYERS 4
+// #define MAX_NPCS 0
 #define MAX_PLAYABLES (MAX_PLAYERS + MAX_NPCS)
 #else
 #define MAX_PLAYERS 1
@@ -375,12 +381,24 @@ void animation_idle(const struct animation_const *data, struct animation_state *
   set_sprite_data(data->data_idx, data->data_tile_count, data->frame_datas[state->frame]);
 }
 #define TRAIN_MAP_BG_X_START 1
+#define TRAIN_MAP_BG_Y_START 0
 #define TRAIN_MAP_CAR_TILE_START 1
 void initialize_train_map(void)
 {
   set_bkg_data(TRAIN_MAP_CAR_TILE_START, train_map_0_TILE_COUNT, train_map_0_tiles);
 }
 
+#define MAX_CARS 6
+#define TILES_PER_CAR 6
+#define X_PER_CAR(s) {s+0,s+1,s+2,s+0,s+1,s+2,}
+const uint8_t _car_x[MAX_CARS][TILES_PER_CAR] = {
+  X_PER_CAR(0),
+  X_PER_CAR(3),
+  X_PER_CAR(6),
+  X_PER_CAR(9),
+  X_PER_CAR(12),
+  X_PER_CAR(15),
+};
 void draw_train_map(struct game_state *state)
 {
   // draw cars left to right
@@ -391,7 +409,10 @@ void draw_train_map(struct game_state *state)
     {
       for (uint8_t t_x = 0; t_x < (train_map_0_WIDTH / 8); t_x++)
       {
-        set_bkg_tile_xy(TRAIN_MAP_BG_X_START + t_x + car * 3, t_y, TRAIN_MAP_CAR_TILE_START + tile);
+        // TODO: figure out why the math failed on NES but not GameBoy
+        uint8_t x = TRAIN_MAP_BG_X_START + _car_x[car][tile];
+        uint8_t y = TRAIN_MAP_BG_Y_START + t_y;
+        set_bkg_tile_xy(x, y, TRAIN_MAP_CAR_TILE_START + tile);
         tile++;
       }
     }
@@ -447,9 +468,9 @@ void draw_players_map(struct game_state *state)
 #define TOOL_DATA_START 8
 #define LOAD_TOOL(name, num)                                                                   \
   set_sprite_data(TOOL_DATA_START + (num * 2), tool_##name##_TILE_COUNT, tool_##name##_tiles); \
-  set_sprite_tile(TOOL_SPRITE_START + num, GET_8x16_SPRITE_TILE(TOOL_DATA_START + (num * 2)));
+  set_sprite_tile(TOOL_SPRITE_START + num + SPRITES_PER_PLAYER * current_player, GET_8x16_SPRITE_TILE(TOOL_DATA_START + (num * 2)));
 
-void initialize_tools(void)
+void initialize_tools(uint8_t current_player)
 {
   LOAD_TOOL(wifi, TOOL_WIFI);
   LOAD_TOOL(wrench, TOOL_WRENCH);
@@ -465,7 +486,7 @@ void draw_tools(struct game_state *state, uint8_t current_player)
   {
     if (!state->tools[tool].unlocked || state->tools[tool].car != current_car)
     {
-      hide_sprite(TOOL_SPRITE_START + tool);
+      hide_sprite(TOOL_SPRITE_START + SPRITES_PER_PLAYER * current_player + tool);
       continue;
     }
     if (state->tools[tool].player_holding != PLAYER_HOLDING_NONE)
@@ -473,55 +494,46 @@ void draw_tools(struct game_state *state, uint8_t current_player)
       // place tool in front of player
       if (state->player_positions[state->tools[tool].player_holding].direction == DIRECTION_LEFT)
       {
-        state->tools[tool].x = state->player_positions[state->tools[tool].player_holding].x;
+        state->tools[tool].x = state->player_positions[state->tools[tool].player_holding].x - 8;
       }
       else if (state->player_positions[state->tools[tool].player_holding].direction == DIRECTION_RIGHT)
       {
-        state->tools[tool].x = state->player_positions[state->tools[tool].player_holding].x + 16;
+        state->tools[tool].x = state->player_positions[state->tools[tool].player_holding].x + 8;
       }
       // TODO: picking up tool behind you does not place in front (match the player sprite flag instead of direction)
       // place tool slightly above the ground/player
       state->tools[tool].y = state->player_positions[state->tools[tool].player_holding].y - TOOL_RAISE_PIXELS;
     }
-    move_sprite(TOOL_SPRITE_START + tool, state->tools[tool].x, PLATFORM_Y_ADJUST + state->tools[tool].y);
+    move_sprite(TOOL_SPRITE_START + SPRITES_PER_PLAYER * current_player + tool,
+                PLATFORM_X_ADJUST + PLAYER_X_ADJUST(current_player) + state->tools[tool].x,
+                PLATFORM_Y_ADJUST + PLAYER_Y_ADJUST(current_player) + state->tools[tool].y);
   }
 }
 
 #define PLAYER_DATA_START (TOOL_DATA_START + TOOL_COUNT * 2)
 #define PLAYER_SPRITE_START (TOOL_SPRITE_START + TOOL_COUNT)
-void initialize_players(void)
+void initialize_players(uint8_t current_player)
 {
-#ifdef NINTENDO_NES
-  for (uint8_t current_player = 0; current_player < MAX_PLAYABLES; current_player++)
-  {
-    for (uint8_t player_of = 0; player_of < MAX_PLAYABLES; player_of++)
-    {
-      set_sprite_tile(PLAYER_SPRITE_START + current_player * 4 + player_of, GET_8x16_SPRITE_TILE(PLAYER_DATA_START + player_of * 2));
-    }
-  }
-#else
-  uint8_t current_player = 0;
   for (uint8_t player_of = 0; player_of < MAX_PLAYABLES; player_of++)
   {
-    set_sprite_tile(PLAYER_SPRITE_START + current_player * 4 + player_of, GET_8x16_SPRITE_TILE(PLAYER_DATA_START + player_of * 2));
+    set_sprite_tile(PLAYER_SPRITE_START + player_of + SPRITES_PER_PLAYER * current_player, GET_8x16_SPRITE_TILE(PLAYER_DATA_START + player_of * 2));
   }
-#endif
 }
 
 #define SP_CONDUCTOR_FRAME_TILE_COUNT 2
-#define PLAYER_ANIMATION_CONST(current_player, player_of)                       \
-  {                                                                             \
-    .sp_idx = PLAYER_SPRITE_START + current_player * MAX_PLAYABLES + player_of, \
-    .data_idx = PLAYER_DATA_START + SP_CONDUCTOR_FRAME_TILE_COUNT * player_of,  \
-    .frames = 3,                                                                \
-    .neutral_frame = 1,                                                         \
-    .data_tile_count = SP_CONDUCTOR_FRAME_TILE_COUNT,                           \
-    .frame_wait = 8,                                                            \
-    .frame_datas = {                                                            \
-      &conductor_tiles[0 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],              \
-      &conductor_tiles[1 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],              \
-      &conductor_tiles[2 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],              \
-    }                                                                           \
+#define PLAYER_ANIMATION_CONST(current_player, player_of)                            \
+  {                                                                                  \
+    .sp_idx = PLAYER_SPRITE_START + player_of + SPRITES_PER_PLAYER * current_player, \
+    .data_idx = PLAYER_DATA_START + SP_CONDUCTOR_FRAME_TILE_COUNT * player_of,       \
+    .frames = 3,                                                                     \
+    .neutral_frame = 1,                                                              \
+    .data_tile_count = SP_CONDUCTOR_FRAME_TILE_COUNT,                                \
+    .frame_wait = 8,                                                                 \
+    .frame_datas = {                                                                 \
+      &conductor_tiles[0 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],                   \
+      &conductor_tiles[1 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],                   \
+      &conductor_tiles[2 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],                   \
+    }                                                                                \
   }
 
 // TODO: adjust this only require MAX_PLAYERS
@@ -587,10 +599,10 @@ void draw_players(struct game_state *state, uint8_t current_player)
 
 #define TASK_DATA_START (PLAYER_DATA_START + MAX_PLAYABLES * 2)
 // fewer players == fewer copies of sprites
-#define TASK_SPRITE_START (PLAYER_SPRITE_START + MAX_PLAYERS * MAX_PLAYABLES)
+#define TASK_SPRITE_START (PLAYER_SPRITE_START + MAX_PLAYABLES)
 uint8_t tool_modifier_0[2 * 4 * 4];
 uint8_t tool_modifier_1[2 * 4 * 4];
-void intitialize_tasks(void)
+void intitialize_tasks(uint8_t current_player)
 {
   for (uint8_t tool = 0; tool < TOOL_COUNT; tool++)
   {
@@ -643,7 +655,7 @@ void intitialize_tasks(void)
     // task sprites
     for (uint8_t task = 0; task < MAX_TASKS_PER_TOOL; task++)
     {
-      uint8_t sprite_start = TASK_SPRITE_START + tool * MAX_TASKS_PER_TOOL + task;
+      uint8_t sprite_start = TASK_SPRITE_START + tool * MAX_TASKS_PER_TOOL + task + SPRITES_PER_PLAYER * current_player;
       set_sprite_tile(sprite_start, GET_8x16_SPRITE_TILE(data_start));
     }
   }
@@ -656,14 +668,16 @@ void draw_tasks(struct game_state *state, uint8_t current_player)
   {
     for (uint8_t task = 0; task < MAX_TASKS_PER_TOOL; task++)
     {
-      uint8_t sprite = TASK_SPRITE_START + tool * MAX_TASKS_PER_TOOL + task;
+      uint8_t sprite = TASK_SPRITE_START + tool * MAX_TASKS_PER_TOOL + task + SPRITES_PER_PLAYER * current_player;
       if (state->tasks[tool][task].progress == 0 || state->tasks[tool][task].car != state->player_positions[current_player].car)
       {
         hide_sprite(sprite);
       }
       else
       {
-        move_sprite(sprite, state->tasks[tool][task].x, PLATFORM_Y_ADJUST + state->tasks[tool][task].y);
+        move_sprite(sprite,
+                    PLATFORM_X_ADJUST + state->tasks[tool][task].x + PLAYER_X_ADJUST(current_player),
+                    PLATFORM_Y_ADJUST + state->tasks[tool][task].y + PLAYER_Y_ADJUST(current_player));
         // animate the task sprite modifier
         set_sprite_tile(sprite, GET_8x16_SPRITE_TILE(TASK_DATA_START + tool * 4 + task_sprite_modifier_frame * 2));
       }
@@ -680,22 +694,19 @@ void draw_tasks(struct game_state *state, uint8_t current_player)
 #define BG_TILE_PLAYER_Y(player) (player == 0 ? 0 : player == 1 ? 7  \
                                                 : player == 2   ? 14 \
                                                                 : 21)
-void initialize_bg_train()
+void initialize_bg_train(uint8_t current_player)
 {
   set_bkg_data(BG_TRAIN_START, bg_train_passenger_TILE_COUNT, bg_train_passenger_tiles);
-  for (uint8_t player = 0; player < MAX_PLAYERS; player++)
+  uint8_t tile = BG_TRAIN_START;
+  for (uint8_t t_y = 0; t_y < (bg_train_passenger_HEIGHT / 8); t_y++)
   {
-    uint8_t tile = BG_TRAIN_START;
-    for (uint8_t t_y = 0; t_y < (bg_train_passenger_HEIGHT / 8); t_y++)
+    for (uint8_t t_x = 0; t_x < (bg_train_passenger_WIDTH / 8); t_x++)
     {
-      for (uint8_t t_x = 0; t_x < (bg_train_passenger_WIDTH / 8); t_x++)
-      {
-        set_bkg_tile_xy(
-            BG_TILE_PLAYER_X(player) + BG_START_TILE_X + t_x,
-            BG_TILE_PLAYER_Y(player) + BG_START_TILE_Y + t_y,
-            tile);
-        tile++;
-      }
+      set_bkg_tile_xy(
+          BG_TILE_PLAYER_X(current_player) + BG_START_TILE_X + t_x,
+          BG_TILE_PLAYER_Y(current_player) + BG_START_TILE_Y + t_y,
+          tile);
+      tile++;
     }
   }
 }
@@ -728,7 +739,7 @@ void npc_replace_input(struct game_state *state, uint8_t npc)
   }
 }
 
-#define TASK_MARGIN 8
+#define TASK_MARGIN 12
 void handle_task_progress(struct game_state *state)
 {
   for (enum TOOL tool = 0; tool < TOOL_COUNT; tool++)
@@ -811,14 +822,17 @@ void main(void)
   initialize_train_map();
   // player map logo
   initialize_players_map();
-  // player sprite
-  initialize_players();
-  // tools
-  initialize_tools();
-  // tasks
-  intitialize_tasks();
-  // bg
-  initialize_bg_train();
+  for (uint8_t player = 0; player < MAX_PLAYERS; player++)
+  {
+    // player sprite
+    initialize_players(player);
+    // tools
+    initialize_tools(player);
+    // tasks
+    intitialize_tasks(player);
+    // bg
+    initialize_bg_train(player);
+  }
 
   struct game_state state = {
       .cars = 2,
@@ -876,12 +890,12 @@ void main(void)
 
     // render
     vsync();
+    draw_players_map(&state);
     for (uint8_t player = 0; player < MAX_PLAYERS; player++)
     {
       draw_players(&state, player);
+      draw_tools(&state, player);
+      draw_tasks(&state, player);
     }
-    draw_players_map(&state);
-    draw_tools(&state, 0);
-    draw_tasks(&state, 0);
   }
 }
