@@ -17,9 +17,10 @@
 #define TRAIN_CAR_HEIGHT bg_train_passenger_HEIGHT
 #define TRAIN_DOOR_TELEPORT_MARGIN 4
 // adjust for sprite height
-#define TRAIN_FLOOR_BASELINE (32)
-#define TRAIN_LOWER_FLOOR (TRAIN_FLOOR_BASELINE + 16)
-#define TRAIN_UPPER_FLOOR (TRAIN_FLOOR_BASELINE - 16)
+#define TRAIN_FLOOR_BASELINE (40)
+#define TRAIN_FLOOR_SEPARATION 16
+#define TRAIN_LOWER_FLOOR (TRAIN_FLOOR_BASELINE + TRAIN_FLOOR_SEPARATION)
+#define TRAIN_UPPER_FLOOR (TRAIN_FLOOR_BASELINE - TRAIN_FLOOR_SEPARATION)
 
 #ifdef NINTENDO_NES
 #define PLATFORM_X_ADJUST 0
@@ -180,51 +181,22 @@ void maybe_interpolate_direction(struct game_state *state, uint8_t player)
 #define PLAYER_X state->player_positions[player].x
 #define PLAYER_Y state->player_positions[player].y
 #define PLAYER_DIRECTION state->player_positions[player].direction
+#define TRAIN_RIGHT_STAIRS_UPPER 119
+#define TRAIN_STAIRS_LEN TRAIN_FLOOR_SEPARATION
   // right ladder enter top
-  if (PLAYER_X == 110 && PLAYER_DIRECTION == DIRECTION_LEFT)
+  if (PLAYER_X == TRAIN_RIGHT_STAIRS_UPPER && PLAYER_Y == TRAIN_FLOOR_BASELINE && PLAYER_DIRECTION == DIRECTION_LEFT)
   {
+    // right stays same but left goes up
     PLAYER_X -= 1;
     PLAYER_Y -= 1;
   }
-  else if ((110 - 15) < PLAYER_X && PLAYER_X < 110 && PLAYER_Y < TRAIN_FLOOR_BASELINE)
+  else if ((PLAYER_X == TRAIN_RIGHT_STAIRS_UPPER - TRAIN_STAIRS_LEN) && PLAYER_Y == TRAIN_UPPER_FLOOR && PLAYER_DIRECTION == DIRECTION_RIGHT)
   {
-    if (PLAYER_DIRECTION == DIRECTION_LEFT)
-    {
-      PLAYER_X -= 1;
-      PLAYER_Y -= 1;
-    }
-    else if (PLAYER_DIRECTION == DIRECTION_RIGHT)
-    {
-      PLAYER_X += 1;
-      PLAYER_Y += 1;
-    }
-  }
-  // left ladder leaving tops
-  else if (PLAYER_X == 25 && PLAYER_DIRECTION == DIRECTION_LEFT && PLAYER_Y < TRAIN_FLOOR_BASELINE)
-  {
-    PLAYER_X -= 1;
-    PLAYER_Y += 1;
-  }
-  else if ((25 - 15) < PLAYER_X && PLAYER_X < 25 && PLAYER_Y < TRAIN_FLOOR_BASELINE)
-  {
-    if (PLAYER_DIRECTION == DIRECTION_LEFT)
-    {
-      PLAYER_X -= 1;
-      PLAYER_Y += 1;
-    }
-    else if (PLAYER_DIRECTION == DIRECTION_RIGHT)
-    {
-      PLAYER_X += 1;
-      PLAYER_Y -= 1;
-    }
-  }
-  // left ladder enter bottom
-  else if (PLAYER_X == 20 && PLAYER_DIRECTION == DIRECTION_RIGHT && PLAYER_Y == TRAIN_FLOOR_BASELINE)
-  {
+    // left stays same but right is down
     PLAYER_X += 1;
     PLAYER_Y += 1;
   }
-  else if (20 < PLAYER_X && PLAYER_X < (20 + 17) && PLAYER_Y > TRAIN_FLOOR_BASELINE)
+  else if ((TRAIN_RIGHT_STAIRS_UPPER - TRAIN_STAIRS_LEN) < PLAYER_X && PLAYER_X < TRAIN_RIGHT_STAIRS_UPPER && TRAIN_UPPER_FLOOR < PLAYER_Y && PLAYER_Y < TRAIN_FLOOR_BASELINE)
   {
     if (PLAYER_DIRECTION == DIRECTION_LEFT)
     {
@@ -237,13 +209,25 @@ void maybe_interpolate_direction(struct game_state *state, uint8_t player)
       PLAYER_Y += 1;
     }
   }
-  // right ladder leaving bottom
-  else if (PLAYER_X == 88 && PLAYER_DIRECTION == DIRECTION_RIGHT && PLAYER_Y > TRAIN_FLOOR_BASELINE)
+  // left drop point top level
+  else if (PLAYER_X == 24 && PLAYER_Y == TRAIN_UPPER_FLOOR)
   {
+    PLAYER_Y = TRAIN_FLOOR_BASELINE;
+  }
+  else if (PLAYER_X == 40 && PLAYER_Y == TRAIN_FLOOR_BASELINE)
+  {
+    PLAYER_Y = TRAIN_LOWER_FLOOR;
+  }
+  // right stirs leave bottom
+#define TRAIN_RIGHT_STAIRS_LOWER 120
+  else if (PLAYER_X == TRAIN_RIGHT_STAIRS_LOWER && PLAYER_Y == TRAIN_LOWER_FLOOR && PLAYER_DIRECTION == DIRECTION_RIGHT)
+  {
+    // left stays same but right goes up
     PLAYER_X += 1;
     PLAYER_Y -= 1;
   }
-  else if (88 < PLAYER_X && PLAYER_X < (88 + 17) && PLAYER_Y >= TRAIN_FLOOR_BASELINE)
+  // note: left stairs lead onto main floor so no exception needed for backtracking
+  else if (TRAIN_RIGHT_STAIRS_LOWER < PLAYER_X && PLAYER_X < (TRAIN_RIGHT_STAIRS_LOWER + TRAIN_STAIRS_LEN) && TRAIN_LOWER_FLOOR > PLAYER_Y && PLAYER_Y > TRAIN_FLOOR_BASELINE)
   {
     if (PLAYER_DIRECTION == DIRECTION_LEFT)
     {
@@ -390,14 +374,21 @@ void initialize_train_map(void)
 
 #define MAX_CARS 6
 #define TILES_PER_CAR 6
-#define X_PER_CAR(s) {s+0,s+1,s+2,s+0,s+1,s+2,}
+#define X_PER_CAR(s) { \
+    s + 0,             \
+    s + 1,             \
+    s + 2,             \
+    s + 0,             \
+    s + 1,             \
+    s + 2,             \
+}
 const uint8_t _car_x[MAX_CARS][TILES_PER_CAR] = {
-  X_PER_CAR(0),
-  X_PER_CAR(3),
-  X_PER_CAR(6),
-  X_PER_CAR(9),
-  X_PER_CAR(12),
-  X_PER_CAR(15),
+    X_PER_CAR(0),
+    X_PER_CAR(3),
+    X_PER_CAR(6),
+    X_PER_CAR(9),
+    X_PER_CAR(12),
+    X_PER_CAR(15),
 };
 void draw_train_map(struct game_state *state)
 {
@@ -691,9 +682,9 @@ void draw_tasks(struct game_state *state, uint8_t current_player)
 #define BG_START_TILE_X 0
 #define BG_START_TILE_Y 2
 #define BG_TILE_PLAYER_X(player) ((player == 0 || player == 2) ? 0 : 0)
-#define BG_TILE_PLAYER_Y(player) (player == 0 ? 0 : player == 1 ? 7  \
-                                                : player == 2   ? 14 \
-                                                                : 21)
+#define BG_TILE_PLAYER_Y(player) (player == 0 ? 0 : player == 1 ? TRAIN_CAR_HEIGHT / 8     \
+                                                : player == 2   ? TRAIN_CAR_HEIGHT / 8 * 2 \
+                                                                : TRAIN_CAR_HEIGHT / 8 * 3)
 void initialize_bg_train(uint8_t current_player)
 {
   set_bkg_data(BG_TRAIN_START, bg_train_passenger_TILE_COUNT, bg_train_passenger_tiles);
@@ -835,7 +826,7 @@ void main(void)
   }
 
   struct game_state state = {
-      .cars = 2,
+      .cars = 4,
       .round_score = 0,
 #define PLAYER_START_POSITION_LEFT 8
 #define PLAYER_START_POSITION_RIGHT (TRAIN_CAR_LEN - 8)
@@ -864,6 +855,30 @@ void main(void)
               .unlocked = 1,
               .car = 1,
               .x = TOOL_START_POSITION_LEFT,
+              .y = TRAIN_FLOOR_BASELINE,
+              .player_holding = PLAYER_HOLDING_NONE,
+          },
+          // TOOL_DRINK
+          {
+              .unlocked = 1,
+              .car = 1,
+              .x = TOOL_START_POSITION_RIGHT,
+              .y = TRAIN_FLOOR_BASELINE,
+              .player_holding = PLAYER_HOLDING_NONE,
+          },
+          // TOOL_CAT
+          {
+              .unlocked = 1,
+              .car = 2,
+              .x = TOOL_START_POSITION_LEFT,
+              .y = TRAIN_FLOOR_BASELINE,
+              .player_holding = PLAYER_HOLDING_NONE,
+          },
+          // TOOL_MUSIC
+          {
+              .unlocked = 1,
+              .car = 2,
+              .x = TOOL_START_POSITION_RIGHT,
               .y = TRAIN_FLOOR_BASELINE,
               .player_holding = PLAYER_HOLDING_NONE,
           },
