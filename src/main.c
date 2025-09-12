@@ -1,6 +1,13 @@
 #include <gbdk/platform.h>
 #include <rand.h>
-#include "gen/conductor.h"
+#include "gen/conductor_0.h"
+#include "gen/conductor_1.h"
+#include "gen/conductor_2.h"
+#include "gen/conductor_3.h"
+#ifdef NINTENDO_NEX
+#include "gen/player_banner_0.h"
+#include "gen/player_banner_1.h"
+#endif
 #include "gen/train_map_0.h"
 #include "gen/train_player_logo_0.h"
 #include "gen/train_player_logo_1.h"
@@ -521,9 +528,9 @@ void initialize_players(uint8_t current_player)
     .data_tile_count = SP_CONDUCTOR_FRAME_TILE_COUNT,                                \
     .frame_wait = 8,                                                                 \
     .frame_datas = {                                                                 \
-      &conductor_tiles[0 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],                   \
-      &conductor_tiles[1 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],                   \
-      &conductor_tiles[2 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],                   \
+      &conductor_##player_of##_tiles[0 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],     \
+      &conductor_##player_of##_tiles[1 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],     \
+      &conductor_##player_of##_tiles[2 * SP_CONDUCTOR_FRAME_TILE_COUNT * 4 * 4],     \
     }                                                                                \
   }
 
