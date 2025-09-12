@@ -15,6 +15,8 @@
 #define TRAIN_CAR_LEN bg_train_passenger_WIDTH
 #define TRAIN_CAR_HEIGHT bg_train_passenger_HEIGHT
 #define TRAIN_DOOR_TELEPORT_MARGIN 4
+// adjust for sprite height
+#define TRAIN_FLOOR_BASELINE (32)
 
 #ifdef NINTENDO_NES
 #define PLATFORM_X_ADJUST 0
@@ -33,7 +35,7 @@
 #ifdef NINTENDO_NES
 // #define PLAYER_X_ADJUST(current_player) ((current_player == 0 || current_player == 2) ? 0 : 120)
 #define PLAYER_X_ADJUST(current_player) (0)
-uint8_t _player_y_adjust[4] = {TRAIN_CAR_HEIGHT*0, TRAIN_CAR_HEIGHT*1, TRAIN_CAR_HEIGHT*2, TRAIN_CAR_HEIGHT*3};
+uint8_t _player_y_adjust[4] = {TRAIN_CAR_HEIGHT * 0, TRAIN_CAR_HEIGHT * 1, TRAIN_CAR_HEIGHT * 2, TRAIN_CAR_HEIGHT * 3};
 #define PLAYER_Y_ADJUST(current_player) (_player_y_adjust[current_player])
 #else
 #define PLAYER_X_ADJUST(current_player) (0)
@@ -52,6 +54,13 @@ struct animation_const
   uint8_t data_tile_count;
   uint8_t *frame_datas[ANIMATION_MAX_FRAMES];
   uint8_t frame_wait;
+};
+
+enum direction
+{
+  DIRECTION_LEFT = -1,
+  DIRECTION_NONE = 0,
+  DIRECTION_RIGHT = 1,
 };
 
 struct animation_state
@@ -154,6 +163,100 @@ uint8_t tool_near(struct game_state *state, enum TOOL tool, uint8_t player)
          state->tools[tool].y <= state->player_positions[player].y + nearness_margin_y;
 }
 uint8_t last_joy[MAX_PLAYERS];
+void maybe_interpolate_direction(struct game_state *state, uint8_t player)
+{
+#define PLAYER_X state->player_positions[player].x
+#define PLAYER_Y state->player_positions[player].y
+#define PLAYER_DIRECTION state->player_positions[player].direction
+  // right ladder enter top
+  if (PLAYER_X == 110 && PLAYER_DIRECTION == DIRECTION_LEFT)
+  {
+    PLAYER_X -= 1;
+    PLAYER_Y -= 1;
+  }
+  else if ((110 - 15) < PLAYER_X && PLAYER_X < 110 && PLAYER_Y < TRAIN_FLOOR_BASELINE)
+  {
+    if (PLAYER_DIRECTION == DIRECTION_LEFT)
+    {
+      PLAYER_X -= 1;
+      PLAYER_Y -= 1;
+    }
+    else if (PLAYER_DIRECTION == DIRECTION_RIGHT)
+    {
+      PLAYER_X += 1;
+      PLAYER_Y += 1;
+    }
+  }
+  // left ladder leaving tops
+  else if (PLAYER_X == 25 && PLAYER_DIRECTION == DIRECTION_LEFT && PLAYER_Y < TRAIN_FLOOR_BASELINE)
+  {
+    PLAYER_X -= 1;
+    PLAYER_Y += 1;
+  }
+  else if ((25 - 15) < PLAYER_X && PLAYER_X < 25 && PLAYER_Y < TRAIN_FLOOR_BASELINE)
+  {
+    if (PLAYER_DIRECTION == DIRECTION_LEFT)
+    {
+      PLAYER_X -= 1;
+      PLAYER_Y += 1;
+    }
+    else if (PLAYER_DIRECTION == DIRECTION_RIGHT)
+    {
+      PLAYER_X += 1;
+      PLAYER_Y -= 1;
+    }
+  }
+  // left ladder enter bottom
+  else if (PLAYER_X == 20 && PLAYER_DIRECTION == DIRECTION_RIGHT && PLAYER_Y == TRAIN_FLOOR_BASELINE)
+  {
+    PLAYER_X += 1;
+    PLAYER_Y += 1;
+  }
+  else if (20 < PLAYER_X && PLAYER_X < (20 + 17) && PLAYER_Y > TRAIN_FLOOR_BASELINE)
+  {
+    if (PLAYER_DIRECTION == DIRECTION_LEFT)
+    {
+      PLAYER_X -= 1;
+      PLAYER_Y -= 1;
+    }
+    else if (PLAYER_DIRECTION == DIRECTION_RIGHT)
+    {
+      PLAYER_X += 1;
+      PLAYER_Y += 1;
+    }
+  }
+  // right ladder leaving bottom
+  else if (PLAYER_X == 88 && PLAYER_DIRECTION == DIRECTION_RIGHT && PLAYER_Y > TRAIN_FLOOR_BASELINE)
+  {
+    PLAYER_X += 1;
+    PLAYER_Y -= 1;
+  }
+  else if (88 < PLAYER_X && PLAYER_X < (88 + 17) && PLAYER_Y >= TRAIN_FLOOR_BASELINE)
+  {
+    if (PLAYER_DIRECTION == DIRECTION_LEFT)
+    {
+      PLAYER_X -= 1;
+      PLAYER_Y += 1;
+    }
+    else if (PLAYER_DIRECTION == DIRECTION_RIGHT)
+    {
+      PLAYER_X += 1;
+      PLAYER_Y -= 1;
+    }
+  }
+  // all other movement
+  else
+  {
+    if (PLAYER_DIRECTION == DIRECTION_LEFT && PLAYER_X > 0)
+    {
+      PLAYER_X += DIRECTION_LEFT;
+    }
+    else if (PLAYER_DIRECTION == DIRECTION_RIGHT && PLAYER_X < TRAIN_CAR_LEN)
+    {
+      PLAYER_X += DIRECTION_RIGHT;
+    }
+  }
+}
 void handle_input(struct game_state *state, uint8_t player)
 {
   // uint8_t joy = joypad();
@@ -161,24 +264,17 @@ void handle_input(struct game_state *state, uint8_t player)
   // directional movment
   if (joy & J_LEFT)
   {
-    if (state->player_positions[player].x > 0)
-    {
-      state->player_positions[player].x -= 1;
-    }
-    state->player_positions[player].direction = -1;
+    state->player_positions[player].direction = DIRECTION_LEFT;
   }
   else if (joy & J_RIGHT)
   {
-    if (state->player_positions[player].x < TRAIN_CAR_LEN)
-    {
-      state->player_positions[player].x += 1;
-    }
-    state->player_positions[player].direction = 1;
+    state->player_positions[player].direction = DIRECTION_RIGHT;
   }
   else
   {
-    state->player_positions[player].direction = 0;
+    state->player_positions[player].direction = DIRECTION_NONE;
   }
+  maybe_interpolate_direction(state, player);
 
   // car teleports
   if (state->player_positions[player].x < TRAIN_DOOR_TELEPORT_MARGIN)
@@ -333,7 +429,9 @@ void draw_players_map(struct game_state *state)
     uint8_t car_x_ratio = approx_car_ratio_lookup(state->player_positions[player].x);
     // sprites were originally design to fit in a single 8x8 square
     // lets keep the sprites that way and adjust in code
-    uint8_t shifted_y = player == 0 ? 0 : player == 1 ? 4 : player == 2 ? 4 : 8;
+    uint8_t shifted_y = player == 0 ? 0 : player == 1 ? 4
+                                      : player == 2   ? 4
+                                                      : 8;
     uint8_t shifted_x = (player == 0 || player == 2) ? 0 : -4;
     move_sprite(PLAYER_MAP_SPRITE_START + player, PLATFORM_X_ADJUST + car_x_start + car_x_ratio + shifted_x, PLATFORM_Y_ADJUST + shifted_y);
   }
@@ -560,21 +658,26 @@ void npc_replace_input(struct game_state *state, uint8_t npc)
   // change directions
   if (state->player_positions[npc].x >= 80)
   {
-    state->player_positions[npc].direction = -1;
+    state->player_positions[npc].direction = DIRECTION_LEFT;
   }
   else if (state->player_positions[npc].x <= 40)
   {
-    state->player_positions[npc].direction = 1;
+    state->player_positions[npc].direction = DIRECTION_RIGHT;
+    // state->player_positions[npc].direction = 0;
   }
 
   // simulate directional movement
-  if (state->player_positions[npc].direction == 1)
+  if (state->player_positions[npc].direction == DIRECTION_RIGHT)
   {
     joypads.joypads[npc] = J_RIGHT;
   }
-  else if (state->player_positions[npc].direction == -1)
+  else if (state->player_positions[npc].direction == DIRECTION_LEFT)
   {
     joypads.joypads[npc] = J_LEFT;
+  }
+  else
+  {
+    joypads.joypads[npc] = 0;
   }
 }
 
@@ -641,10 +744,10 @@ void main(void)
   struct game_state state = {
       .cars = 2,
       .player_positions = {
-          {.car = 0, .x = 80, .y = 24, .direction = 0},
-          {.car = 1, .x = RANDOM_X_POSITION, .y = 24, .direction = 0},
-          {.car = 1, .x = RANDOM_X_POSITION, .y = 24, .direction = -1},
-          {.car = 0, .x = RANDOM_X_POSITION, .y = 24, .direction = 1},
+          {.car = 0, .x = 80, .y = TRAIN_FLOOR_BASELINE, .direction = 0},
+          {.car = 1, .x = RANDOM_X_POSITION, .y = TRAIN_FLOOR_BASELINE, .direction = 0},
+          {.car = 1, .x = RANDOM_X_POSITION, .y = TRAIN_FLOOR_BASELINE, .direction = -1},
+          {.car = 0, .x = RANDOM_X_POSITION, .y = TRAIN_FLOOR_BASELINE, .direction = 1},
       },
 #define PLAYER_ANIMATION_INIT {.frame = 1, .direction = 1, .frame_tick = 0}
 #define PLAYER_ANIMATIONS_INIT {PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT}
@@ -655,7 +758,7 @@ void main(void)
               .unlocked = 1,
               .car = 0,
               .x = 100,
-              .y = 24,
+              .y = TRAIN_FLOOR_BASELINE,
               .player_holding = PLAYER_HOLDING_NONE,
           },
           // TOOL_WRENCH
@@ -663,7 +766,7 @@ void main(void)
               .unlocked = 1,
               .car = 1,
               .x = 100,
-              .y = 24,
+              .y = TRAIN_FLOOR_BASELINE,
               .player_holding = PLAYER_HOLDING_NONE,
           },
       },
