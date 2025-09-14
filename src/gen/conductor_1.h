@@ -9,21 +9,21 @@
 #define conductor_1_TILE_ORIGIN 0
 #define conductor_1_TILE_W 8
 #define conductor_1_TILE_H 16
-#define conductor_1_WIDTH 8
+#define conductor_1_WIDTH 24
 #define conductor_1_HEIGHT 16
-#define conductor_1_TILE_COUNT 2
+#define conductor_1_TILE_COUNT 6
 #define conductor_1_PALETTE_COUNT 1
 #define conductor_1_COLORS_PER_PALETTE 4
 #define conductor_1_TOTAL_COLORS 4
-#define conductor_1_PIVOT_X 4
+#define conductor_1_PIVOT_X 12
 #define conductor_1_PIVOT_Y 8
-#define conductor_1_PIVOT_W 8
+#define conductor_1_PIVOT_W 24
 #define conductor_1_PIVOT_H 16
 extern const metasprite_t* const conductor_1_metasprites[1];
 
 BANKREF_EXTERN(conductor_1)
 
 extern const palette_color_t conductor_1_palettes[4];
-extern const uint8_t conductor_1_tiles[32];
+extern const uint8_t conductor_1_tiles[96];
 
 #endif
