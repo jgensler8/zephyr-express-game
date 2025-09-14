@@ -118,11 +118,7 @@ struct tool
 #define TASK_PROGRESS_INIT 120
 struct task
 {
-  // uint8_t car;
-  // uint8_t x;
-  // uint8_t y;
   uint8_t tool;
-  uint8_t slot;
   uint8_t progress;
 };
 
@@ -152,6 +148,7 @@ struct game_state
   uint8_t cars;
   uint8_t round_score;
   struct player_position player_positions[MAX_PLAYABLES];
+  uint8_t player_car_changed[MAX_PLAYERS];
   struct animation_state player_animations[MAX_PLAYABLES];
   struct tool tools[TOOL_COUNT];
   uint8_t open_task_count;
@@ -169,6 +166,13 @@ void update_tool_cars(struct game_state *state)
     {
       state->tools[tool].car = state->player_positions[state->tools[tool].player_holding].car;
     }
+  }
+}
+void reset_player_car_changed(struct game_state *state)
+{
+  for (uint8_t player = 0; player < MAX_PLAYERS; player++)
+  {
+    state->player_car_changed[player] = 0;
   }
 }
 uint8_t tool_held(struct game_state *state, uint8_t player)
@@ -294,6 +298,7 @@ void handle_input(struct game_state *state, uint8_t player)
 
     if (state->player_positions[player].car > 0)
     {
+      state->player_car_changed[player] = 1;
       state->player_positions[player].car -= 1;
       state->player_positions[player].x = TRAIN_CAR_LEN - TRAIN_DOOR_TELEPORT_MARGIN;
       update_tool_cars(state);
@@ -303,6 +308,7 @@ void handle_input(struct game_state *state, uint8_t player)
   {
     if (state->player_positions[player].car < state->cars - 1)
     {
+      state->player_car_changed[player] = 1;
       state->player_positions[player].car += 1;
       state->player_positions[player].x = TRAIN_DOOR_TELEPORT_MARGIN;
       update_tool_cars(state);
@@ -646,8 +652,10 @@ struct coordinate
   uint8_t x;
   uint8_t y;
 };
-#define TASK_UPPER_ROW(task) {.x = 5 + task * 2, .y = BG_START_TILE_Y}
-#define TASK_LOWER_ROW(task) {.x = 6 + task * 2, .y = BG_START_TILE_Y + 4}
+#define UPPER_ROW_Y (BG_START_TILE_Y)
+#define LOWER_ROW_Y (UPPER_ROW_Y + 4)
+#define TASK_UPPER_ROW(task) {.x = 5 + task * 2, .y = UPPER_ROW_Y}
+#define TASK_LOWER_ROW(task) {.x = 6 + task * 2, .y = LOWER_ROW_Y}
 struct coordinate task_slot_x_y[TASK_SLOTS_PER_CAR] = {
     TASK_UPPER_ROW(0),
     TASK_UPPER_ROW(1),
@@ -658,23 +666,37 @@ struct coordinate task_slot_x_y[TASK_SLOTS_PER_CAR] = {
     TASK_LOWER_ROW(2),
     TASK_LOWER_ROW(3),
 };
+void maybe_undraw_task_for_player(struct game_state *state, uint8_t car, uint8_t t_i, uint8_t current_player)
+{
+  if (state->player_positions[current_player].car != car)
+  {
+    return;
+  }
+#define TASK_COORDINATE task_slot_x_y[t_i]
+  set_bkg_tile_xy(
+      PLAYER_X_ADJUST_TILE(current_player) + TASK_COORDINATE.x,
+      PLAYER_Y_ADJUST_TILE(current_player) + TASK_COORDINATE.y,
+      0);
+  set_bkg_tile_xy(
+      PLAYER_X_ADJUST_TILE(current_player) + TASK_COORDINATE.x + 1,
+      PLAYER_Y_ADJUST_TILE(current_player) + TASK_COORDINATE.y,
+      0);
+}
+void maybe_undraw_task_for_all_players(struct game_state *state, uint8_t car, uint8_t t_i)
+{
+  for (uint8_t current_player = 0; current_player < MAX_PLAYERS; current_player++)
+  {
+    maybe_undraw_task_for_player(state, car, t_i, current_player);
+  }
+}
 void draw_tasks(struct game_state *state, uint8_t current_player)
 {
   uint8_t car = state->player_positions[current_player].car;
-#define TASK_COORDINATE task_slot_x_y[state->tasks[car][t_i].slot]
-  // unset tiles
-  for (uint8_t t_i = 0; t_i < TASK_SLOTS_PER_CAR; t_i++)
+  if (state->player_car_changed[current_player])
   {
-    if (state->tasks[car][t_i].progress == 0)
+    for (uint8_t t_i = 0; t_i < TASK_SLOTS_PER_CAR; t_i++)
     {
-      set_bkg_tile_xy(
-          PLAYER_X_ADJUST_TILE(current_player) + TASK_COORDINATE.x,
-          PLAYER_Y_ADJUST_TILE(current_player) + TASK_COORDINATE.y,
-          0);
-      set_bkg_tile_xy(
-          PLAYER_X_ADJUST_TILE(current_player) + TASK_COORDINATE.x + 1,
-          PLAYER_Y_ADJUST_TILE(current_player) + TASK_COORDINATE.y,
-          0);
+      maybe_undraw_task_for_player(state, car, t_i, current_player);
     }
   }
   // set tiles
@@ -735,22 +757,30 @@ void handle_task_progress(struct game_state *state)
       continue;
     }
     uint8_t car = state->tools[tool].car;
-    for (uint8_t task = 0; task < MAX_TASKS_PER_TOOL; task++)
+    // for each task in the tools car
+    // TODO: maybe cache x and/or y lookup to only perform 3 checks instead of TASK_SLOTS_PER_CAR
+
+    uint8_t tool_on_upper_level = state->tools[tool].y < TRAIN_UPPER_FLOOR;
+    uint8_t tool_on_lower_level = state->tools[tool].y >= TRAIN_FLOOR_BASELINE;
+    for (uint8_t t_i = 0; t_i < TASK_SLOTS_PER_CAR; t_i++)
     {
-      if (state->tasks[car][task].tool == tool && state->tasks[car][task].progress > 0)
+      if (state->tasks[car][t_i].tool == tool && state->tasks[car][t_i].progress > 0)
       {
         // tool close to task
-        uint8_t diff_x = state->tools[tool].x - (task_slot_x_y[state->tasks[car][task].slot].x * 8);
-        uint8_t diff_y = state->tools[tool].y - (task_slot_x_y[state->tasks[car][task].slot].y * 8);
-        if ((diff_x < TASK_MARGIN || 255 - TASK_MARGIN < diff_x) && (diff_y < TASK_MARGIN || 255 - TASK_MARGIN < diff_y))
+        uint8_t task_on_upper_level = task_slot_x_y[t_i].y == UPPER_ROW_Y;
+        uint8_t task_on_lower_level = task_slot_x_y[t_i].y == LOWER_ROW_Y;
+        if ((tool_on_upper_level && task_on_upper_level) || (tool_on_lower_level && task_on_lower_level))
         {
-          state->tasks[car][task].progress -= 1;
+          state->tasks[car][t_i].progress -= 1;
           // handle completed task
-          if (state->tasks[car][task].progress == 0)
+          if (state->tasks[car][t_i].progress == 0)
           {
             state->round_score += 1;
             state->open_task_count -= 1;
+            maybe_undraw_task_for_all_players(state, car, t_i);
           }
+          // only handle one tasks progress
+          break;
         }
       }
     }
@@ -785,7 +815,6 @@ void maybe_create_tasks(struct game_state *state)
     if (state->tasks[car][t_i].progress == 0)
     {
       // create task
-      state->tasks[car][t_i].slot = t_i;
       state->tasks[car][t_i].tool = tool;
       state->tasks[car][t_i].progress = TASK_PROGRESS_INIT;
       state->open_task_count++;
@@ -884,7 +913,14 @@ void main(void)
       .tasks = {
           // car 0
           {
-              {.progress = TASK_PROGRESS_INIT, .slot = 0, .tool = 0},
+              {.progress = TASK_PROGRESS_INIT, .tool = 0},
+              {.progress = TASK_PROGRESS_INIT, .tool = 0},
+              {.progress = TASK_PROGRESS_INIT, .tool = 0},
+              {.progress = TASK_PROGRESS_INIT, .tool = 0},
+              {.progress = TASK_PROGRESS_INIT, .tool = 0},
+              {.progress = TASK_PROGRESS_INIT, .tool = 0},
+              {.progress = TASK_PROGRESS_INIT, .tool = 0},
+              {.progress = TASK_PROGRESS_INIT, .tool = 0},
           },
       },
   };
@@ -916,5 +952,6 @@ void main(void)
       draw_tools(&state, player);
       draw_tasks(&state, player);
     }
+    reset_player_car_changed(&state);
   }
 }
