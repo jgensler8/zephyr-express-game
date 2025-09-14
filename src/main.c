@@ -195,7 +195,7 @@ uint8_t tool_near(struct game_state *state, enum TOOL tool, uint8_t player)
          state->tools[tool].y >= state->player_positions[player].y - nearness_margin_y &&
          state->tools[tool].y <= state->player_positions[player].y + nearness_margin_y;
 }
-uint8_t last_joy[MAX_PLAYERS];
+joypads_t last_joy;
 void maybe_interpolate_direction(struct game_state *state, uint8_t player)
 {
 #define PLAYER_X state->player_positions[player].x
@@ -316,7 +316,7 @@ void handle_input(struct game_state *state, uint8_t player)
   }
 
   // handle tools + tasks
-  uint8_t j_a_pressed = joy & J_A && !(last_joy[player] & J_A);
+  uint8_t j_a_pressed = joy & J_A && !(last_joy.joypads[player] & J_A);
   if (j_a_pressed)
   {
     uint8_t held = tool_held(state, player);
@@ -354,7 +354,7 @@ void handle_input(struct game_state *state, uint8_t player)
   }
 
   // save state
-  last_joy[player] = joy;
+  last_joy.joypads[player] = joy;
 }
 
 void animation_progress(const struct animation_const *data, struct animation_state *state)
@@ -935,7 +935,7 @@ void main(void)
     {
       npc_replace_input(&state, npc);
     }
-    for (uint8_t player = 0; player < MAX_PLAYABLES; player++)
+    for (uint8_t player = 0; player < MAX_PLAYERS; player++)
     {
       handle_input(&state, player);
     }
