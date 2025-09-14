@@ -476,7 +476,7 @@ void draw_players_map(struct game_state *state)
   }
 }
 
-#define BG_TRAIN_START 8
+#define BG_TRAIN_DATA_START 8
 #define BG_START_TILE_X 0
 #define BG_START_TILE_Y 2
 #define BG_TILE_PLAYER_X(player) ((player == 0 || player == 2) ? 0 : 0)
@@ -485,8 +485,8 @@ void draw_players_map(struct game_state *state)
                                                                 : TRAIN_CAR_HEIGHT / 8 * 3)
 void initialize_bg_train(uint8_t current_player)
 {
-  set_bkg_data(BG_TRAIN_START, bg_train_passenger_TILE_COUNT, bg_train_passenger_tiles);
-  uint8_t tile = BG_TRAIN_START;
+  set_bkg_data(BG_TRAIN_DATA_START, bg_train_passenger_TILE_COUNT, bg_train_passenger_tiles);
+  uint8_t tile = BG_TRAIN_DATA_START;
   for (uint8_t t_y = 0; t_y < (bg_train_passenger_HEIGHT / 8); t_y++)
   {
     for (uint8_t t_x = 0; t_x < (bg_train_passenger_WIDTH / 8); t_x++)
@@ -633,7 +633,7 @@ void draw_players(struct game_state *state, uint8_t current_player)
   }
 }
 
-#define TASK_DATA_START (BG_TRAIN_START + bg_train_passenger_TILE_COUNT)
+#define TASK_DATA_START (BG_TRAIN_DATA_START + bg_train_passenger_TILE_COUNT)
 // fewer players == fewer copies of sprites
 #define TASK_SPRITE_START (PLAYER_SPRITE_START + MAX_PLAYABLES)
 uint8_t tool_modifier_0[2 * 4 * 4];
@@ -673,14 +673,19 @@ void maybe_undraw_task_for_player(struct game_state *state, uint8_t car, uint8_t
     return;
   }
 #define TASK_COORDINATE task_slot_x_y[t_i]
+  uint8_t tile = 0;
+  if (TASK_COORDINATE.y == UPPER_ROW_Y)
+  {
+    tile = BG_TRAIN_DATA_START;
+  }
   set_bkg_tile_xy(
       PLAYER_X_ADJUST_TILE(current_player) + TASK_COORDINATE.x,
       PLAYER_Y_ADJUST_TILE(current_player) + TASK_COORDINATE.y,
-      0);
+      tile);
   set_bkg_tile_xy(
       PLAYER_X_ADJUST_TILE(current_player) + TASK_COORDINATE.x + 1,
       PLAYER_Y_ADJUST_TILE(current_player) + TASK_COORDINATE.y,
-      0);
+      tile);
 }
 void maybe_undraw_task_for_all_players(struct game_state *state, uint8_t car, uint8_t t_i)
 {
@@ -935,7 +940,7 @@ void main(void)
     {
       npc_replace_input(&state, npc);
     }
-    for (uint8_t player = 0; player < MAX_PLAYERS; player++)
+    for (uint8_t player = 0; player < MAX_PLAYABLES; player++)
     {
       handle_input(&state, player);
     }
