@@ -6,12 +6,12 @@ NES_BIN = train-game.nes
 ASSETS_TOOLS = tool_wifi.png tool_wrench.png tool_drink.png tool_cat.png tool_music.png
 ASSETS_PLAYER_LOGOS = train_player_logo_0.png train_player_logo_1.png train_player_logo_2.png train_player_logo_3.png
 ASSETS_PER_PLAYER = conductor_0.png conductor_1.png conductor_2.png conductor_3.png player_banner_0.png player_banner_1.png
-ASSETS = train_map_0.png train_player_logo_arrow.png bg_train_passenger.png task_sprite_modifier.png tasks.png $(ASSETS_PER_PLAYER) $(ASSETS_TOOLS) $(ASSETS_PLAYER_LOGOS)
+ASSETS = train_map_0.png train_player_logo_arrow.png bg_train_passenger.png task_sprite_modifier.png tasks.png cursor.png $(ASSETS_PER_PLAYER) $(ASSETS_TOOLS) $(ASSETS_PLAYER_LOGOS)
 ASSET_IN = assets
 ASSETS_DEP = $(addprefix assets/,$(ASSETS))
 PNG2ASSET_OUT = src/gen
 ASSETS_OUT = $(addprefix $(PNG2ASSET_OUT)/,$(ASSETS:.png=.c))
-SRCS_CORE = main.c
+SRCS_CORE = input.c scene_gameplay.c scene_tutorial.c scene_main_menu.c scene_upgrade_menu.c main.c
 SRCS = $(addprefix src/,$(SRCS_CORE)) $(ASSETS_OUT)
 
 all:	$(GB_BIN) $(NES_BIN)
@@ -20,6 +20,7 @@ ASSET_ARGS_COMMON = -noflip -bpp 2 -spr8x16 -keep_palette_order -sprite_no_optim
 ASSET_ARGS_BKG = -noflip -bpp 2 -spr8x8 -keep_palette_order -sprite_no_optimize
 ASSET_BANK_ARG = -b 1
 $(ASSETS_OUT): $(ASSETS_DEP)
+	$(PNG2ASSET) $(ASSET_IN)/cursor.png -o $(PNG2ASSET_OUT)/cursor.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/conductor_0.png -o $(PNG2ASSET_OUT)/conductor_0.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/conductor_1.png -o $(PNG2ASSET_OUT)/conductor_1.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/conductor_2.png -o $(PNG2ASSET_OUT)/conductor_2.c $(ASSET_ARGS_COMMON) $(ASSET_BANK_ARG)
