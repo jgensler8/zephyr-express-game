@@ -11,6 +11,7 @@ ASSET_IN = assets
 ASSETS_DEP = $(addprefix assets/,$(ASSETS))
 PNG2ASSET_OUT = src/gen
 ASSETS_OUT = $(addprefix $(PNG2ASSET_OUT)/,$(ASSETS:.png=.c))
+HEADERS_CORE = input.h scenes.h types.h
 SRCS_CORE = input.c scene_gameplay.c scene_tutorial.c scene_main_menu.c scene_upgrade_menu.c main.c
 SRCS = $(addprefix src/,$(SRCS_CORE)) $(ASSETS_OUT)
 

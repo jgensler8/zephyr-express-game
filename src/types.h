@@ -89,14 +89,13 @@ struct task
 // #define MAX_NPCS 0
 // #define MAX_PLAYERS 4
 // #define MAX_NPCS 0
-#define MAX_PLAYABLES (MAX_PLAYERS + MAX_NPCS)
 #else
 #define MAX_PLAYERS 1
-#define MAX_NPCS 3
-#define MAX_PLAYABLES (MAX_PLAYERS + MAX_NPCS)
+// #define MAX_NPCS 3
+#define MAX_NPCS 0
 #endif
+#define MAX_PLAYABLES (MAX_PLAYERS + MAX_NPCS)
 #define MAX_CARS 6
-#define MAX_TASKS_PER_TOOL 2
 #define TASK_SLOTS_PER_CAR 8
 struct game_state
 {
@@ -106,12 +105,16 @@ struct game_state
   uint8_t player_car_changed[MAX_PLAYERS];
   struct animation_state player_animations[MAX_PLAYABLES];
   struct tool tools[TOOL_COUNT];
+  uint8_t max_open_tasks;
   uint8_t open_task_count;
   struct task tasks[MAX_CARS][TASK_SLOTS_PER_CAR];
 };
 
+struct game_state default_state();
+extern struct game_state state;
+
 struct scene
 {
-    void (*init)(void);
-    void (*loop)(void);
+  void (*init)(void);
+  void (*loop)(void);
 };

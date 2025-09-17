@@ -24,6 +24,7 @@ void main_menu_init(void)
     // menu sprite
     set_sprite_data(0, cursor_TILE_COUNT, cursor_tiles);
     set_sprite_tile(0, GET_8x16_SPRITE_TILE(0));
+    hide_sprites_range(0, MAX_HARDWARE_SPRITES);
 }
 void main_menu_loop(void)
 {

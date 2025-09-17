@@ -681,7 +681,7 @@ void handle_task_progress(struct game_state *state)
 
 void maybe_create_tasks(struct game_state *state)
 {
-    if (state->open_task_count > 3)
+    if (state->open_task_count >= state->max_open_tasks)
     {
         return;
     }
@@ -694,7 +694,7 @@ void maybe_create_tasks(struct game_state *state)
         iters++;
     }
     // pick car
-    // do not spawn in the same car as the tool
+    // do not spawn in the same car as the tool (except when cars == 1)
     uint8_t car = rand() % state->cars;
     if (car == state->tools[tool].car)
     {
@@ -702,13 +702,14 @@ void maybe_create_tasks(struct game_state *state)
     }
     // pick slot
     uint8_t slot = rand() % TASK_SLOTS_PER_CAR;
-    for (uint8_t t_i = 0; t_i < TASK_SLOTS_PER_CAR; t_i++)
+    for (uint8_t t_i = slot; t_i < slot + TASK_SLOTS_PER_CAR; t_i++)
     {
-        if (state->tasks[car][t_i].progress == 0)
+        uint8_t current_slot = t_i % TASK_SLOTS_PER_CAR;
+        if (state->tasks[car][current_slot].progress == 0)
         {
             // create task
-            state->tasks[car][t_i].tool = tool;
-            state->tasks[car][t_i].progress = TASK_PROGRESS_INIT;
+            state->tasks[car][current_slot].tool = tool;
+            state->tasks[car][current_slot].progress = TASK_PROGRESS_INIT;
             state->open_task_count++;
             return;
         }
@@ -716,25 +717,8 @@ void maybe_create_tasks(struct game_state *state)
     // at max tasks per car
 }
 
-struct game_state state;
-void scene_gameplay_init(void)
+struct game_state default_state()
 {
-    // train map
-    SWITCH_ROM(BANK(train_map_0));
-    initialize_train_map();
-    // player map logo
-    initialize_players_map();
-    intialize_tasks();
-    for (uint8_t player = 0; player < MAX_PLAYERS; player++)
-    {
-        // player sprite
-        initialize_players(player);
-        // tools
-        initialize_tools(player);
-        // bg
-        initialize_bg_train(player);
-    }
-
     struct game_state new_state = {
         .cars = 4,
         .round_score = 0,
@@ -793,6 +777,7 @@ void scene_gameplay_init(void)
                 .player_holding = PLAYER_HOLDING_NONE,
             },
         },
+        .max_open_tasks = 4,
         .open_task_count = 0,
         .tasks = {
             // car 0
@@ -808,7 +793,26 @@ void scene_gameplay_init(void)
             },
         },
     };
-    state = new_state;
+    return new_state;
+}
+
+void scene_gameplay_init(void)
+{
+    // train map
+    SWITCH_ROM(BANK(train_map_0));
+    initialize_train_map();
+    // player map logo
+    initialize_players_map();
+    intialize_tasks();
+    for (uint8_t player = 0; player < MAX_PLAYERS; player++)
+    {
+        // player sprite
+        initialize_players(player);
+        // tools
+        initialize_tools(player);
+        // bg
+        initialize_bg_train(player);
+    }
 
     draw_train_map(&state);
 }
@@ -816,7 +820,6 @@ void scene_gameplay_init(void)
 void scene_gameplay_loop(void)
 {
     // handle input
-    joypad_ex(&joypads);
     for (uint8_t npc = MAX_PLAYERS; npc < MAX_PLAYABLES; npc++)
     {
         npc_replace_input(&state, npc);
