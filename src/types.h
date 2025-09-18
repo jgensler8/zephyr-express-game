@@ -99,14 +99,15 @@ struct task
 #define TASK_SLOTS_PER_CAR 8
 // this would force us to define several constants for struct init, lets just stick with 4
 #define STRUCT_MAX_PLAYABLES 4
+// fix the round distance but leave ticks per distance variable
+#define ROUND_DISTANCE 100
 struct game_state
 {
   uint8_t round;
   uint8_t round_tasks;
-  uint8_t round_distance;
   uint8_t current_distance;
-  uint8_t round_distance_ticks;
-  uint8_t current_distance_tick;
+  uint16_t round_distance_ticks;
+  uint16_t current_distance_tick;
   uint8_t cars;
   uint8_t round_score;
   struct player_position player_positions[STRUCT_MAX_PLAYABLES];

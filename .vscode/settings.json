@@ -7,6 +7,9 @@
         "scenes.h": "c",
         "types.h": "c",
         "stdio.h": "c",
-        "bg_train_passenger.h": "c"
+        "bg_train_passenger.h": "c",
+        "input.h": "c",
+        "font.h": "c",
+        "platform.h": "c"
     }
 }

@@ -366,19 +366,17 @@ void draw_players_map(struct game_state *state)
     }
 }
 
-#define CUSTOMER_STATUS_TILE_START 183
+#define CUSTOMER_STATUS_TILE_START (TRAIN_MAP_CAR_TILE_START + TILES_PER_CAR)
 #define CUSTOMER_STATUS_START_X 13
 #define CUSTOMER_STATUS_START_Y 0
-void draw_customer_satisfaction(struct game_state *state)
+#define CUSTOMER_STATUS_SPRITE_WIDTH_TILES (4 * 4 * 3)
+#define CUSTOMER_STATUS_SPRITE_SHEET_WIDTH (CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 6)
+void init_customer_status(void)
 {
-    // loop
-    uint8_t customer_sprite = state->round_score * 6;
-    set_bkg_data(CUSTOMER_STATUS_TILE_START, customer_status_TILE_COUNT, &customer_status_tiles[customer_sprite]);
-    // init
     uint8_t tile = 0;
-    for (uint8_t t_y = 0; t_y < (train_map_0_HEIGHT / 8); t_y++)
+    for (uint8_t t_y = 0; t_y < (2); t_y++)
     {
-        for (uint8_t t_x = 0; t_x < (train_map_0_WIDTH / 8); t_x++)
+        for (uint8_t t_x = 0; t_x < (3); t_x++)
         {
             uint8_t x = CUSTOMER_STATUS_START_X + t_x;
             uint8_t y = CUSTOMER_STATUS_START_Y + t_y;
@@ -387,17 +385,142 @@ void draw_customer_satisfaction(struct game_state *state)
         }
     }
 }
+uint8_t last_customer_status;
+void draw_customer_status(struct game_state *state)
+{
+    if (last_customer_status == state->round_score)
+    {
+        return;
+    }
+    last_customer_status = state->round_score;
+    uint16_t customer_sprite_starts[] = {
+        CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 0,
+        CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 1,
+        CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 2,
+        CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 3,
+        CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 4,
+        CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 5,
+    };
+    uint8_t sprite_starts_index = state->round_score;
+    if (state->round_score > 5)
+    {
+        sprite_starts_index = 5;
+    }
+    uint16_t tile_start = customer_sprite_starts[sprite_starts_index];
+    set_bkg_data(CUSTOMER_STATUS_TILE_START, 3, &customer_status_tiles[tile_start]);
+    set_bkg_data(CUSTOMER_STATUS_TILE_START + 3, 3, &customer_status_tiles[tile_start + CUSTOMER_STATUS_SPRITE_SHEET_WIDTH]);
+}
 
 #define ROUND_PROGRESS_TILE_START (CUSTOMER_STATUS_TILE_START + 9)
 #define ROUND_PROGRESS_START_X 16
 #define ROUND_PROGRESS_START_Y 0
 #define ROUND_PROGRESS_SPRITE_WIDTH_TILES 3
-void draw_round_progress(struct game_state *state)
+#define ROUND_PROGRESS_SPRITE_START(sprite_index) (ROUND_PROGRESS_SPRITE_WIDTH_TILES * 4 * 4 * sprite_index)
+// >>> "),ROUND_PROGRESS_SPRITE_START(".join(map(str, [round(i*(19/102)) for i in range(101)] ))
+const uint16_t distance_sprite_starts[ROUND_DISTANCE] = {
+    ROUND_PROGRESS_SPRITE_START(0),
+    ROUND_PROGRESS_SPRITE_START(0),
+    ROUND_PROGRESS_SPRITE_START(1),
+    ROUND_PROGRESS_SPRITE_START(1),
+    ROUND_PROGRESS_SPRITE_START(1),
+    ROUND_PROGRESS_SPRITE_START(1),
+    ROUND_PROGRESS_SPRITE_START(1),
+    ROUND_PROGRESS_SPRITE_START(1),
+    ROUND_PROGRESS_SPRITE_START(2),
+    ROUND_PROGRESS_SPRITE_START(2),
+    ROUND_PROGRESS_SPRITE_START(2),
+    ROUND_PROGRESS_SPRITE_START(2),
+    ROUND_PROGRESS_SPRITE_START(2),
+    ROUND_PROGRESS_SPRITE_START(3),
+    ROUND_PROGRESS_SPRITE_START(3),
+    ROUND_PROGRESS_SPRITE_START(3),
+    ROUND_PROGRESS_SPRITE_START(3),
+    ROUND_PROGRESS_SPRITE_START(3),
+    ROUND_PROGRESS_SPRITE_START(4),
+    ROUND_PROGRESS_SPRITE_START(4),
+    ROUND_PROGRESS_SPRITE_START(4),
+    ROUND_PROGRESS_SPRITE_START(4),
+    ROUND_PROGRESS_SPRITE_START(4),
+    ROUND_PROGRESS_SPRITE_START(4),
+    ROUND_PROGRESS_SPRITE_START(5),
+    ROUND_PROGRESS_SPRITE_START(5),
+    ROUND_PROGRESS_SPRITE_START(5),
+    ROUND_PROGRESS_SPRITE_START(5),
+    ROUND_PROGRESS_SPRITE_START(5),
+    ROUND_PROGRESS_SPRITE_START(6),
+    ROUND_PROGRESS_SPRITE_START(6),
+    ROUND_PROGRESS_SPRITE_START(6),
+    ROUND_PROGRESS_SPRITE_START(6),
+    ROUND_PROGRESS_SPRITE_START(6),
+    ROUND_PROGRESS_SPRITE_START(7),
+    ROUND_PROGRESS_SPRITE_START(7),
+    ROUND_PROGRESS_SPRITE_START(7),
+    ROUND_PROGRESS_SPRITE_START(7),
+    ROUND_PROGRESS_SPRITE_START(7),
+    ROUND_PROGRESS_SPRITE_START(7),
+    ROUND_PROGRESS_SPRITE_START(8),
+    ROUND_PROGRESS_SPRITE_START(8),
+    ROUND_PROGRESS_SPRITE_START(8),
+    ROUND_PROGRESS_SPRITE_START(8),
+    ROUND_PROGRESS_SPRITE_START(8),
+    ROUND_PROGRESS_SPRITE_START(9),
+    ROUND_PROGRESS_SPRITE_START(9),
+    ROUND_PROGRESS_SPRITE_START(9),
+    ROUND_PROGRESS_SPRITE_START(9),
+    ROUND_PROGRESS_SPRITE_START(9),
+    ROUND_PROGRESS_SPRITE_START(10),
+    ROUND_PROGRESS_SPRITE_START(10),
+    ROUND_PROGRESS_SPRITE_START(10),
+    ROUND_PROGRESS_SPRITE_START(10),
+    ROUND_PROGRESS_SPRITE_START(10),
+    ROUND_PROGRESS_SPRITE_START(10),
+    ROUND_PROGRESS_SPRITE_START(11),
+    ROUND_PROGRESS_SPRITE_START(11),
+    ROUND_PROGRESS_SPRITE_START(11),
+    ROUND_PROGRESS_SPRITE_START(11),
+    ROUND_PROGRESS_SPRITE_START(11),
+    ROUND_PROGRESS_SPRITE_START(12),
+    ROUND_PROGRESS_SPRITE_START(12),
+    ROUND_PROGRESS_SPRITE_START(12),
+    ROUND_PROGRESS_SPRITE_START(12),
+    ROUND_PROGRESS_SPRITE_START(12),
+    ROUND_PROGRESS_SPRITE_START(12),
+    ROUND_PROGRESS_SPRITE_START(13),
+    ROUND_PROGRESS_SPRITE_START(13),
+    ROUND_PROGRESS_SPRITE_START(13),
+    ROUND_PROGRESS_SPRITE_START(13),
+    ROUND_PROGRESS_SPRITE_START(13),
+    ROUND_PROGRESS_SPRITE_START(14),
+    ROUND_PROGRESS_SPRITE_START(14),
+    ROUND_PROGRESS_SPRITE_START(14),
+    ROUND_PROGRESS_SPRITE_START(14),
+    ROUND_PROGRESS_SPRITE_START(14),
+    ROUND_PROGRESS_SPRITE_START(15),
+    ROUND_PROGRESS_SPRITE_START(15),
+    ROUND_PROGRESS_SPRITE_START(15),
+    ROUND_PROGRESS_SPRITE_START(15),
+    ROUND_PROGRESS_SPRITE_START(15),
+    ROUND_PROGRESS_SPRITE_START(15),
+    ROUND_PROGRESS_SPRITE_START(16),
+    ROUND_PROGRESS_SPRITE_START(16),
+    ROUND_PROGRESS_SPRITE_START(16),
+    ROUND_PROGRESS_SPRITE_START(16),
+    ROUND_PROGRESS_SPRITE_START(16),
+    ROUND_PROGRESS_SPRITE_START(17),
+    ROUND_PROGRESS_SPRITE_START(17),
+    ROUND_PROGRESS_SPRITE_START(17),
+    ROUND_PROGRESS_SPRITE_START(17),
+    ROUND_PROGRESS_SPRITE_START(17),
+    ROUND_PROGRESS_SPRITE_START(18),
+    ROUND_PROGRESS_SPRITE_START(18),
+    ROUND_PROGRESS_SPRITE_START(18),
+    ROUND_PROGRESS_SPRITE_START(18),
+    ROUND_PROGRESS_SPRITE_START(18),
+    ROUND_PROGRESS_SPRITE_START(18),
+    ROUND_PROGRESS_SPRITE_START(19),
+};
+void init_round_progress(void)
 {
-    // loop
-    uint16_t distance_sprite = state->current_distance * ROUND_PROGRESS_SPRITE_WIDTH_TILES * 4 * 4;
-    set_bkg_data(ROUND_PROGRESS_TILE_START, ROUND_PROGRESS_SPRITE_WIDTH_TILES, &map_progress_tiles[distance_sprite]);
-    // init
     uint8_t tile = 0;
     for (uint8_t t_y = 0; t_y < (1); t_y++)
     {
@@ -410,8 +533,19 @@ void draw_round_progress(struct game_state *state)
         }
     }
 }
+uint8_t last_round_distance;
+void draw_round_progress(struct game_state *state)
+{
+    if (last_round_distance == state->current_distance)
+    {
+        return;
+    }
+    last_round_distance = state->current_distance;
+    uint16_t tile_start = distance_sprite_starts[state->current_distance];
+    set_bkg_data(ROUND_PROGRESS_TILE_START, ROUND_PROGRESS_SPRITE_WIDTH_TILES, &map_progress_tiles[tile_start]);
+}
 
-#define BG_TRAIN_DATA_START 8
+#define BG_TRAIN_DATA_START (ROUND_PROGRESS_TILE_START + ROUND_PROGRESS_SPRITE_WIDTH_TILES)
 #define BG_START_TILE_X 0
 #define BG_START_TILE_Y 2
 #define BG_TILE_PLAYER_X(player) ((player == 0 || player == 2) ? 0 : 0)
@@ -590,7 +724,9 @@ struct coordinate
 #define UPPER_ROW_Y (BG_START_TILE_Y)
 #define LOWER_ROW_Y (UPPER_ROW_Y + 4)
 #define TASK_UPPER_ROW(task) {.x = 5 + task * 2, .y = UPPER_ROW_Y}
-#define TASK_LOWER_ROW(task) {.x = 6 + task * 2, .y = LOWER_ROW_Y}
+#define TASK_LOWER_ROW(task) \
+    {                        \
+        .x = 6 + task * 2, .y = LOWER_ROW_Y}
 struct coordinate task_slot_x_y[TASK_SLOTS_PER_CAR] = {
     TASK_UPPER_ROW(0),
     TASK_UPPER_ROW(1),
@@ -769,18 +905,11 @@ uint8_t get_round_tasks(uint8_t round)
 {
     return 12 + round * 3;
 }
-uint8_t get_round_distance(uint8_t round)
-{
-    return 100 + round * 5;
-}
 struct game_state default_state = {
     .cars = 4,
     .round = 0,
-    // .round_distance = get_round_distance(0),
     .current_distance = 0,
-    .round_distance_ticks = 60,
     .current_distance_tick = 0,
-    // .round_tasks = get_round_tasks(0),
     .round_score = 0,
     .max_open_tasks = 8,
     .open_task_count = 8,
@@ -857,10 +986,7 @@ struct game_state default_state = {
 
 struct game_state starter_state = {
     .round = 0,
-    // .round_tasks = get_round_tasks(0),
-    // .round_distance = get_round_distance(0),
     .current_distance = 0,
-    .round_distance_ticks = 60,
     .current_distance_tick = 0,
     .max_open_tasks = 2,
     .open_task_count = 0,
@@ -884,7 +1010,7 @@ void init_state(uint8_t round)
 {
     state = starter_state;
     state.round = round;
-    state.round_distance = get_round_distance(round);
+    state.round_distance_ticks = 1;
     state.round_tasks = get_round_tasks(round);
 }
 
@@ -897,6 +1023,10 @@ void scene_gameplay_init(void)
     // player map logo
     initialize_players_map();
     intialize_tasks();
+    last_customer_status = 254;
+    init_customer_status();
+    last_round_distance = 254;
+    init_round_progress();
     for (uint8_t player = 0; player < MAX_PLAYERS; player++)
     {
         // player sprite
@@ -928,7 +1058,7 @@ void scene_gameplay_loop(void)
     // render
     vsync();
     draw_players_map(&state);
-    draw_customer_satisfaction(&state);
+    draw_customer_status(&state);
     draw_round_progress(&state);
     for (uint8_t player = 0; player < MAX_PLAYERS; player++)
     {
@@ -939,13 +1069,16 @@ void scene_gameplay_loop(void)
     reset_player_car_changed(&state);
 
     // distance tick
-    state.current_distance_tick--;
     if (state.current_distance_tick == 0)
     {
         state.current_distance_tick = state.round_distance_ticks;
         state.current_distance++;
     }
-    if (state.current_distance == state.round_distance)
+    else
+    {
+        state.current_distance_tick--;
+    }
+    if (state.current_distance == ROUND_DISTANCE)
     {
         queue_scene(&scene_upgrade_menu);
     }
