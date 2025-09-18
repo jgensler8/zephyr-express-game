@@ -1,28 +1,7 @@
 #include "types.h"
 #include "scenes.h"
 #include "input.h"
-#include <gbdk/font.h>
-
-#define FONT_LOAD_TILES 186
-#define ALPHABET_CHARS 26
-uint8_t unpacked_font[ALPHABET_CHARS * 4 * 4];
-
-void print(uint8_t x, uint8_t y, char *str)
-{
-    uint8_t *next = str;
-    while (*next != 0)
-    {
-        uint8_t offset = *next - 'A';
-        uint8_t tile = FONT_LOAD_TILES + offset;
-        if (offset >= ALPHABET_CHARS)
-        {
-            tile = 0;
-        }
-        set_bkg_tile_xy(x, y, tile);
-        next++;
-        x++;
-    }
-}
+#include "font.h"
 
 uint8_t tutorial_step;
 uint8_t tutorial_step_init;
@@ -30,10 +9,7 @@ uint8_t tutorial_step_init;
 void tutorial_init(void)
 {
     // copy font tiles
-    font_init();
-    font_load(font_min);
-    get_bkg_data(11, ALPHABET_CHARS, unpacked_font);
-    set_bkg_data(FONT_LOAD_TILES, ALPHABET_CHARS, unpacked_font);
+    font_set_bkg_data(FONT_GAMEPLAY_SAFE_TILE);
 
     // set state
     tutorial_step = 0;
@@ -63,34 +39,34 @@ void tutorial_loop(void)
         switch (tutorial_step)
         {
         case 0:
-            print(1, 12, "WELCOME TO THE");
-            print(2, 13, "TUTORIAL");
-            print(1, 15, "TRY TO MOVE");
-            print(2, 16, "LEFT AND RIGHT");
+            font_print(1, 12, "WELCOME TO THE");
+            font_print(2, 13, "TUTORIAL");
+            font_print(1, 15, "TRY TO MOVE");
+            font_print(2, 16, "LEFT AND RIGHT");
             break;
         case 1:
-            print(1, 12, "GREAT");
-            print(1, 13, "MOVE TO THE TOOL");
-            print(2, 14, "ON THE RIGHT");
-            print(1, 15, "PRESS A TO");
-            print(2, 16, "PICK IT UP");
+            font_print(1, 12, "GREAT");
+            font_print(1, 13, "MOVE TO THE TOOL");
+            font_print(2, 14, "ON THE RIGHT");
+            font_print(1, 15, "PRESS A TO");
+            font_print(2, 16, "PICK IT UP");
             break;
         case 2:
-            print(1, 12, "WONDERFUL");
-            print(1, 13, "WALK TO THE TASK");
-            print(1, 15, "TRY TO MATCH THE");
-            print(2, 16, "SYMBOL OF THE TOOL");
+            font_print(1, 12, "WONDERFUL");
+            font_print(1, 13, "WALK TO THE TASK");
+            font_print(1, 15, "TRY TO MATCH THE");
+            font_print(2, 16, "SYMBOL OF THE TOOL");
             break;
         case 3:
-            print(1, 12, "AWESOME");
-            print(1, 13, "COMPLETE TWO");
-            print(2, 14, "MORE TASKS");
+            font_print(1, 12, "AWESOME");
+            font_print(1, 13, "COMPLETE THREE");
+            font_print(2, 14, "MORE TASKS");
             break;
         case 4:
-            print(1, 12, "CONGRATULATIONS");
-            print(1, 13, "YOUVE COMPLETED THE");
-            print(2, 14, "TUTORIAL");
-            print(1, 16, "PRESS A TO LEAVE");
+            font_print(1, 12, "CONGRATULATIONS");
+            font_print(1, 13, "YOUVE COMPLETED THE");
+            font_print(2, 14, "TUTORIAL");
+            font_print(1, 16, "PRESS A TO LEAVE");
             break;
         }
         tutorial_step_init = 1;

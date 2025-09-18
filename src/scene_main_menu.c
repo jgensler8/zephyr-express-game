@@ -1,6 +1,6 @@
 #include "types.h"
 #include "input.h"
-#include <gbdk/font.h>
+#include "font.h"
 #include <stdio.h>
 #include "scenes.h"
 #include "gen/cursor.h"
@@ -8,19 +8,18 @@
 #define MENU_START_TILE_X 7
 #define MENU_START_TILE_Y 6
 #define FOCUS_MAX 2
-uint8_t focus = 0;
-uint8_t menu_x[FOCUS_MAX] = {8 * MENU_START_TILE_X - 4, 8 * MENU_START_TILE_X - 4};
-uint8_t menu_y[FOCUS_MAX] = {PLATFORM_Y_ADJUST + 8 * MENU_START_TILE_Y, PLATFORM_Y_ADJUST + 8 * (MENU_START_TILE_Y + 1)};
+static uint8_t focus = 0;
+static uint8_t menu_x[FOCUS_MAX] = {8 * MENU_START_TILE_X - 4, 8 * MENU_START_TILE_X - 4};
+static uint8_t menu_y[FOCUS_MAX] = {PLATFORM_Y_ADJUST + 8 * MENU_START_TILE_Y, PLATFORM_Y_ADJUST + 8 * (MENU_START_TILE_Y + 1)};
 void main_menu_init(void)
 {
+    FILL_BKG_EMPTY;
     // state
     focus = 0;
     // menu text
-    font_init();
-    font_load(font_min);
-    printf("\n\n\n\n\n\n");
-    printf("       Play\n");
-    printf("       Tutorial\n");
+    font_set_bkg_data(1);
+    font_print(MENU_START_TILE_X, MENU_START_TILE_Y, "PLAY");
+    font_print(MENU_START_TILE_X, MENU_START_TILE_Y + 1, "TUTORIAL");
     // menu sprite
     set_sprite_data(0, cursor_TILE_COUNT, cursor_tiles);
     set_sprite_tile(0, GET_8x16_SPRITE_TILE(0));
@@ -49,7 +48,7 @@ void main_menu_loop(void)
     {
         struct scene *scenes_next[FOCUS_MAX] =
             {
-                &scene_gameplay,
+                &scene_difficulty_select,
                 &scene_tutorial,
             };
         queue_scene(scenes_next[focus]);

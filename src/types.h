@@ -97,20 +97,22 @@ struct task
 #define MAX_PLAYABLES (MAX_PLAYERS + MAX_NPCS)
 #define MAX_CARS 6
 #define TASK_SLOTS_PER_CAR 8
+// this would force us to define several constants for struct init, lets just stick with 4
+#define STRUCT_MAX_PLAYABLES 4
 struct game_state
 {
   uint8_t cars;
   uint8_t round_score;
-  struct player_position player_positions[MAX_PLAYABLES];
-  uint8_t player_car_changed[MAX_PLAYERS];
-  struct animation_state player_animations[MAX_PLAYABLES];
+  struct player_position player_positions[STRUCT_MAX_PLAYABLES];
+  uint8_t player_car_changed[STRUCT_MAX_PLAYABLES];
+  struct animation_state player_animations[STRUCT_MAX_PLAYABLES];
   struct tool tools[TOOL_COUNT];
   uint8_t max_open_tasks;
   uint8_t open_task_count;
   struct task tasks[MAX_CARS][TASK_SLOTS_PER_CAR];
 };
 
-struct game_state default_state();
+struct game_state default_state(void);
 extern struct game_state state;
 
 struct scene
@@ -118,3 +120,5 @@ struct scene
   void (*init)(void);
   void (*loop)(void);
 };
+
+#define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 20, 18, 0)

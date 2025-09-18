@@ -4,6 +4,8 @@
         "train_player_logo_0.h": "c",
         "train_player_logo_1.h": "c",
         "train_player_logo_3.h": "c",
-        "scenes.h": "c"
+        "scenes.h": "c",
+        "types.h": "c",
+        "stdio.h": "c"
     }
 }

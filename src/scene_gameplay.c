@@ -460,7 +460,7 @@ void initialize_players(uint8_t current_player)
     }
 
 // TODO: adjust this only require MAX_PLAYERS
-const struct animation_const player_animations_const[MAX_PLAYABLES][MAX_PLAYABLES] = {
+const struct animation_const player_animations_const[STRUCT_MAX_PLAYABLES][STRUCT_MAX_PLAYABLES] = {
     {
         PLAYER_ANIMATION_CONST(0, 0),
         PLAYER_ANIMATION_CONST(0, 1),
@@ -798,6 +798,7 @@ struct game_state default_state()
 
 void scene_gameplay_init(void)
 {
+    FILL_BKG_EMPTY;
     // train map
     SWITCH_ROM(BANK(train_map_0));
     initialize_train_map();

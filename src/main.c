@@ -2,6 +2,7 @@
 #include <rand.h>
 #include "scenes.h"
 #include "input.h"
+#include "font.h"
 
 struct game_state state;
 
@@ -18,12 +19,13 @@ void main(void)
   SPRITES_8x16;
   SHOW_SPRITES;
   SHOW_BKG;
-  fill_bkg_rect(0, 0, 24, 16, 0);
+  FILL_BKG_EMPTY;
   joypad_init(MAX_PLAYABLES, &joypads);
+  font_unpack();
 
-  // queue_scene(&scene_main_menu);
+  queue_scene(&scene_main_menu);
   // queue_scene(&scene_gameplay);
-  queue_scene(&scene_tutorial);
+  // queue_scene(&scene_tutorial);
   while (1)
   {
     input_scan();

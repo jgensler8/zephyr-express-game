@@ -1,0 +1,6 @@
+#include <gbdk/platform.h>
+
+void font_unpack(void);
+#define FONT_GAMEPLAY_SAFE_TILE 186
+void font_set_bkg_data(uint8_t tile);
+void font_print(uint8_t x, uint8_t y, char *str);
