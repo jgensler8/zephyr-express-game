@@ -773,19 +773,17 @@ uint8_t get_round_distance(uint8_t round)
 {
     return 100 + round * 5;
 }
-struct game_state default_state()
-{
-    struct game_state new_state = {
-        .cars = 4,
-        .round = 0,
-        .round_distance = get_round_distance(0),
-        .current_distance = 0,
-        .round_distance_ticks = 60,
-        .current_distance_tick = 0,
-        .round_tasks = get_round_tasks(0),
-        .round_score = 0,
-        .max_open_tasks = 8,
-        .open_task_count = 8,
+struct game_state default_state = {
+    .cars = 4,
+    .round = 0,
+    // .round_distance = get_round_distance(0),
+    .current_distance = 0,
+    .round_distance_ticks = 60,
+    .current_distance_tick = 0,
+    // .round_tasks = get_round_tasks(0),
+    .round_score = 0,
+    .max_open_tasks = 8,
+    .open_task_count = 8,
 #define PLAYER_START_POSITION_LEFT 8
 #define PLAYER_START_POSITION_RIGHT (TRAIN_CAR_LEN - 8)
 #define PLAYER_START_POSITIONS {                                                             \
@@ -794,98 +792,100 @@ struct game_state default_state()
     {.car = 1, .x = PLAYER_START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = -1}, \
     {.car = 1, .x = PLAYER_START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 1}, \
 }
-        .player_positions = PLAYER_START_POSITIONS,
+    .player_positions = PLAYER_START_POSITIONS,
 #define PLAYER_ANIMATION_INIT {.frame = 1, .direction = 1, .frame_tick = 0}
 #define PLAYER_ANIMATIONS_INIT {PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT}
-        .player_animations = PLAYER_ANIMATIONS_INIT,
+    .player_animations = PLAYER_ANIMATIONS_INIT,
 #define TOOL_START_POSITION_LEFT 12
 #define TOOL_START_POSITION_RIGHT (TRAIN_CAR_LEN - 12)
-        .tools = {
-            // TOOL_WIFI
-            {
-                .unlocked = 1,
-                .car = 0,
-                .x = TOOL_START_POSITION_RIGHT,
-                .y = TRAIN_FLOOR_BASELINE,
-                .player_holding = PLAYER_HOLDING_NONE,
-            },
-            // TOOL_WRENCH
-            {
-                .unlocked = 1,
-                .car = 1,
-                .x = TOOL_START_POSITION_LEFT,
-                .y = TRAIN_FLOOR_BASELINE,
-                .player_holding = PLAYER_HOLDING_NONE,
-            },
-            // TOOL_DRINK
-            {
-                .unlocked = 1,
-                .car = 1,
-                .x = TOOL_START_POSITION_RIGHT,
-                .y = TRAIN_FLOOR_BASELINE,
-                .player_holding = PLAYER_HOLDING_NONE,
-            },
-            // TOOL_CAT
-            {
-                .unlocked = 1,
-                .car = 2,
-                .x = TOOL_START_POSITION_LEFT,
-                .y = TRAIN_FLOOR_BASELINE,
-                .player_holding = PLAYER_HOLDING_NONE,
-            },
-            // TOOL_MUSIC
-            {
-                .unlocked = 1,
-                .car = 2,
-                .x = TOOL_START_POSITION_RIGHT,
-                .y = TRAIN_FLOOR_BASELINE,
-                .player_holding = PLAYER_HOLDING_NONE,
-            },
+    .tools = {
+        // TOOL_WIFI
+        {
+            .unlocked = 1,
+            .car = 0,
+            .x = TOOL_START_POSITION_RIGHT,
+            .y = TRAIN_FLOOR_BASELINE,
+            .player_holding = PLAYER_HOLDING_NONE,
         },
-        .tasks = {
-            // car 0
-            {
-                {.progress = TASK_PROGRESS_INIT, .tool = 0},
-                {.progress = TASK_PROGRESS_INIT, .tool = 0},
-                {.progress = TASK_PROGRESS_INIT, .tool = 0},
-                {.progress = TASK_PROGRESS_INIT, .tool = 0},
-                {.progress = TASK_PROGRESS_INIT, .tool = 0},
-                {.progress = TASK_PROGRESS_INIT, .tool = 0},
-                {.progress = TASK_PROGRESS_INIT, .tool = 0},
-                {.progress = TASK_PROGRESS_INIT, .tool = 0},
-            },
+        // TOOL_WRENCH
+        {
+            .unlocked = 1,
+            .car = 1,
+            .x = TOOL_START_POSITION_LEFT,
+            .y = TRAIN_FLOOR_BASELINE,
+            .player_holding = PLAYER_HOLDING_NONE,
         },
-    };
-    return new_state;
-}
+        // TOOL_DRINK
+        {
+            .unlocked = 1,
+            .car = 1,
+            .x = TOOL_START_POSITION_RIGHT,
+            .y = TRAIN_FLOOR_BASELINE,
+            .player_holding = PLAYER_HOLDING_NONE,
+        },
+        // TOOL_CAT
+        {
+            .unlocked = 1,
+            .car = 2,
+            .x = TOOL_START_POSITION_LEFT,
+            .y = TRAIN_FLOOR_BASELINE,
+            .player_holding = PLAYER_HOLDING_NONE,
+        },
+        // TOOL_MUSIC
+        {
+            .unlocked = 1,
+            .car = 2,
+            .x = TOOL_START_POSITION_RIGHT,
+            .y = TRAIN_FLOOR_BASELINE,
+            .player_holding = PLAYER_HOLDING_NONE,
+        },
+    },
+    .tasks = {
+        // car 0
+        {
+            {.progress = TASK_PROGRESS_INIT, .tool = 0},
+            {.progress = TASK_PROGRESS_INIT, .tool = 0},
+            {.progress = TASK_PROGRESS_INIT, .tool = 0},
+            {.progress = TASK_PROGRESS_INIT, .tool = 0},
+            {.progress = TASK_PROGRESS_INIT, .tool = 0},
+            {.progress = TASK_PROGRESS_INIT, .tool = 0},
+            {.progress = TASK_PROGRESS_INIT, .tool = 0},
+            {.progress = TASK_PROGRESS_INIT, .tool = 0},
+        },
+    },
+};
 
-struct game_state starter_state()
-{
-    struct game_state new_state = {
-        .round = 0,
-        .round_tasks = get_round_tasks(0),
-        .round_distance = get_round_distance(0),
-        .current_distance = 0,
-        .round_distance_ticks = 60,
-        .current_distance_tick = 0,
-        .max_open_tasks = 2,
-        .open_task_count = 0,
-        .cars = 1,
-        .round_score = 0,
-        .player_animations = PLAYER_ANIMATIONS_INIT,
-        .player_positions = PLAYER_START_POSITIONS,
-        .tools = {
-            // TOOL_WIFI
-            {
-                .unlocked = 1,
-                .car = 0,
-                .x = TOOL_START_POSITION_RIGHT,
-                .y = TRAIN_FLOOR_BASELINE,
-                .player_holding = PLAYER_HOLDING_NONE,
-            },
+struct game_state starter_state = {
+    .round = 0,
+    // .round_tasks = get_round_tasks(0),
+    // .round_distance = get_round_distance(0),
+    .current_distance = 0,
+    .round_distance_ticks = 60,
+    .current_distance_tick = 0,
+    .max_open_tasks = 2,
+    .open_task_count = 0,
+    .cars = 1,
+    .round_score = 0,
+    .player_animations = PLAYER_ANIMATIONS_INIT,
+    .player_positions = PLAYER_START_POSITIONS,
+    .tools = {
+        // TOOL_WIFI
+        {
+            .unlocked = 1,
+            .car = 0,
+            .x = TOOL_START_POSITION_RIGHT,
+            .y = TRAIN_FLOOR_BASELINE,
+            .player_holding = PLAYER_HOLDING_NONE,
         },
-    };
-    return new_state;
+    },
+};
+
+void init_state(uint8_t round)
+{
+    state = starter_state;
+    state.round = round;
+    state.round_distance = get_round_distance(round);
+    state.round_tasks = get_round_tasks(round);
 }
 
 void scene_gameplay_init(void)

@@ -14,7 +14,7 @@ void tutorial_init(void)
     // set state
     tutorial_step = 0;
     tutorial_step_init = 0;
-    state = default_state();
+    state = default_state;
     state.cars = 1;
     state.open_task_count = 1;
     state.max_open_tasks = 1;

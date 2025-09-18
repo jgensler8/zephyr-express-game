@@ -6,7 +6,7 @@ NES_BIN = train-game.nes
 ASSETS_TOOLS = tool_wifi.png tool_wrench.png tool_drink.png tool_cat.png tool_music.png
 ASSETS_PLAYER_LOGOS = train_player_logo_0.png train_player_logo_1.png train_player_logo_2.png train_player_logo_3.png
 ASSETS_PER_PLAYER = conductor_0.png conductor_1.png conductor_2.png conductor_3.png player_banner_0.png player_banner_1.png
-ASSETS = train_map_0.png train_player_logo_arrow.png bg_train_passenger.png task_sprite_modifier.png tasks.png cursor.png customer_status.png map_progress.png $(ASSETS_PER_PLAYER) $(ASSETS_TOOLS) $(ASSETS_PLAYER_LOGOS)
+ASSETS = train_map_0.png train_player_logo_arrow.png bg_train_passenger.png task_sprite_modifier.png tasks.png cursor.png customer_status.png map_progress.png font_alphabet.png $(ASSETS_PER_PLAYER) $(ASSETS_TOOLS) $(ASSETS_PLAYER_LOGOS)
 ASSET_IN = assets
 ASSETS_DEP = $(addprefix assets/,$(ASSETS))
 PNG2ASSET_OUT = src/gen
@@ -44,6 +44,7 @@ $(ASSETS_OUT): $(ASSETS_DEP)
 	$(PNG2ASSET) $(ASSET_IN)/player_banner_1.png -o $(PNG2ASSET_OUT)/player_banner_1.c $(ASSET_ARGS_BKG) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/customer_status.png -o $(PNG2ASSET_OUT)/customer_status.c $(ASSET_ARGS_BKG) $(ASSET_BANK_ARG)
 	$(PNG2ASSET) $(ASSET_IN)/map_progress.png -o $(PNG2ASSET_OUT)/map_progress.c $(ASSET_ARGS_BKG) $(ASSET_BANK_ARG)
+	$(PNG2ASSET) $(ASSET_IN)/font_alphabet.png -o $(PNG2ASSET_OUT)/font_alphabet.c $(ASSET_ARGS_BKG) $(ASSET_BANK_ARG)
 
 compile.bat: Makefile
 	@echo "REM Automatically generated from Makefile" > compile.bat

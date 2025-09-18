@@ -21,10 +21,10 @@ void main(void)
   SHOW_BKG;
   FILL_BKG_EMPTY;
   joypad_init(MAX_PLAYABLES, &joypads);
-  font_unpack();
 
-  queue_scene(&scene_main_menu);
-  // queue_scene(&scene_gameplay);
+  // queue_scene(&scene_main_menu);
+  init_state(0);
+  queue_scene(&scene_gameplay);
   // queue_scene(&scene_tutorial);
   while (1)
   {

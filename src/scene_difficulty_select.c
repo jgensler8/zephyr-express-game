@@ -52,7 +52,7 @@ void difficulty_select_loop(void)
     }
     else if (PRESSED(0, J_A))
     {
-        state = default_state();
+        state = default_state;
         switch (focus)
         {
         case 0:

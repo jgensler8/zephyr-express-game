@@ -118,8 +118,10 @@ struct game_state
   struct task tasks[MAX_CARS][TASK_SLOTS_PER_CAR];
 };
 
-struct game_state default_state(void);
+extern struct game_state default_state;
+extern struct game_state starter_state;
 extern struct game_state state;
+void init_state(uint8_t round);
 
 struct scene
 {
