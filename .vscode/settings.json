@@ -6,6 +6,7 @@
         "train_player_logo_3.h": "c",
         "scenes.h": "c",
         "types.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "bg_train_passenger.h": "c"
     }
 }

@@ -2,6 +2,7 @@
 #include "types.h"
 #include "input.h"
 #include <rand.h>
+#include "scenes.h"
 #include "gen/conductor_0.h"
 #include "gen/conductor_1.h"
 #include "gen/conductor_2.h"
@@ -22,6 +23,8 @@
 #include "gen/tool_music.h"
 #include "gen/bg_train_passenger.h"
 #include "gen/tasks.h"
+#include "gen/customer_status.h"
+#include "gen/map_progress.h"
 #define TRAIN_CAR_LEN bg_train_passenger_WIDTH
 #define TRAIN_CAR_HEIGHT bg_train_passenger_HEIGHT
 #define TRAIN_DOOR_TELEPORT_MARGIN 4
@@ -360,6 +363,51 @@ void draw_players_map(struct game_state *state)
                                                           : 8;
         uint8_t shifted_x = (player == 0 || player == 2) ? 0 : -4;
         move_sprite(PLAYER_MAP_SPRITE_START + player, PLATFORM_X_ADJUST + car_x_start + car_x_ratio + shifted_x, PLATFORM_Y_ADJUST + shifted_y);
+    }
+}
+
+#define CUSTOMER_STATUS_TILE_START 183
+#define CUSTOMER_STATUS_START_X 13
+#define CUSTOMER_STATUS_START_Y 0
+void draw_customer_satisfaction(struct game_state *state)
+{
+    // loop
+    uint8_t customer_sprite = state->round_score * 6;
+    set_bkg_data(CUSTOMER_STATUS_TILE_START, customer_status_TILE_COUNT, &customer_status_tiles[customer_sprite]);
+    // init
+    uint8_t tile = 0;
+    for (uint8_t t_y = 0; t_y < (train_map_0_HEIGHT / 8); t_y++)
+    {
+        for (uint8_t t_x = 0; t_x < (train_map_0_WIDTH / 8); t_x++)
+        {
+            uint8_t x = CUSTOMER_STATUS_START_X + t_x;
+            uint8_t y = CUSTOMER_STATUS_START_Y + t_y;
+            set_bkg_tile_xy(x, y, CUSTOMER_STATUS_TILE_START + tile);
+            tile++;
+        }
+    }
+}
+
+#define ROUND_PROGRESS_TILE_START (CUSTOMER_STATUS_TILE_START + 9)
+#define ROUND_PROGRESS_START_X 16
+#define ROUND_PROGRESS_START_Y 0
+#define ROUND_PROGRESS_SPRITE_WIDTH_TILES 3
+void draw_round_progress(struct game_state *state)
+{
+    // loop
+    uint16_t distance_sprite = state->current_distance * ROUND_PROGRESS_SPRITE_WIDTH_TILES * 4 * 4;
+    set_bkg_data(ROUND_PROGRESS_TILE_START, ROUND_PROGRESS_SPRITE_WIDTH_TILES, &map_progress_tiles[distance_sprite]);
+    // init
+    uint8_t tile = 0;
+    for (uint8_t t_y = 0; t_y < (1); t_y++)
+    {
+        for (uint8_t t_x = 0; t_x < (ROUND_PROGRESS_SPRITE_WIDTH_TILES); t_x++)
+        {
+            uint8_t x = ROUND_PROGRESS_START_X + t_x;
+            uint8_t y = ROUND_PROGRESS_START_Y + t_y;
+            set_bkg_tile_xy(x, y, ROUND_PROGRESS_TILE_START + tile);
+            tile++;
+        }
     }
 }
 
@@ -717,19 +765,36 @@ void maybe_create_tasks(struct game_state *state)
     // at max tasks per car
 }
 
+uint8_t get_round_tasks(uint8_t round)
+{
+    return 12 + round * 3;
+}
+uint8_t get_round_distance(uint8_t round)
+{
+    return 100 + round * 5;
+}
 struct game_state default_state()
 {
     struct game_state new_state = {
         .cars = 4,
+        .round = 0,
+        .round_distance = get_round_distance(0),
+        .current_distance = 0,
+        .round_distance_ticks = 60,
+        .current_distance_tick = 0,
+        .round_tasks = get_round_tasks(0),
         .round_score = 0,
+        .max_open_tasks = 8,
+        .open_task_count = 8,
 #define PLAYER_START_POSITION_LEFT 8
 #define PLAYER_START_POSITION_RIGHT (TRAIN_CAR_LEN - 8)
-        .player_positions = {
-            {.car = 0, .x = PLAYER_START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = 0},
-            {.car = 0, .x = PLAYER_START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 0},
-            {.car = 1, .x = PLAYER_START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = -1},
-            {.car = 1, .x = PLAYER_START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 1},
-        },
+#define PLAYER_START_POSITIONS {                                                             \
+    {.car = 0, .x = PLAYER_START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = 0},  \
+    {.car = 0, .x = PLAYER_START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 0}, \
+    {.car = 1, .x = PLAYER_START_POSITION_LEFT, .y = TRAIN_FLOOR_BASELINE, .direction = -1}, \
+    {.car = 1, .x = PLAYER_START_POSITION_RIGHT, .y = TRAIN_FLOOR_BASELINE, .direction = 1}, \
+}
+        .player_positions = PLAYER_START_POSITIONS,
 #define PLAYER_ANIMATION_INIT {.frame = 1, .direction = 1, .frame_tick = 0}
 #define PLAYER_ANIMATIONS_INIT {PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT, PLAYER_ANIMATION_INIT}
         .player_animations = PLAYER_ANIMATIONS_INIT,
@@ -777,8 +842,6 @@ struct game_state default_state()
                 .player_holding = PLAYER_HOLDING_NONE,
             },
         },
-        .max_open_tasks = 4,
-        .open_task_count = 0,
         .tasks = {
             // car 0
             {
@@ -790,6 +853,35 @@ struct game_state default_state()
                 {.progress = TASK_PROGRESS_INIT, .tool = 0},
                 {.progress = TASK_PROGRESS_INIT, .tool = 0},
                 {.progress = TASK_PROGRESS_INIT, .tool = 0},
+            },
+        },
+    };
+    return new_state;
+}
+
+struct game_state starter_state()
+{
+    struct game_state new_state = {
+        .round = 0,
+        .round_tasks = get_round_tasks(0),
+        .round_distance = get_round_distance(0),
+        .current_distance = 0,
+        .round_distance_ticks = 60,
+        .current_distance_tick = 0,
+        .max_open_tasks = 2,
+        .open_task_count = 0,
+        .cars = 1,
+        .round_score = 0,
+        .player_animations = PLAYER_ANIMATIONS_INIT,
+        .player_positions = PLAYER_START_POSITIONS,
+        .tools = {
+            // TOOL_WIFI
+            {
+                .unlocked = 1,
+                .car = 0,
+                .x = TOOL_START_POSITION_RIGHT,
+                .y = TRAIN_FLOOR_BASELINE,
+                .player_holding = PLAYER_HOLDING_NONE,
             },
         },
     };
@@ -836,6 +928,8 @@ void scene_gameplay_loop(void)
     // render
     vsync();
     draw_players_map(&state);
+    draw_customer_satisfaction(&state);
+    draw_round_progress(&state);
     for (uint8_t player = 0; player < MAX_PLAYERS; player++)
     {
         draw_players(&state, player);
@@ -843,6 +937,18 @@ void scene_gameplay_loop(void)
         draw_tasks(&state, player);
     }
     reset_player_car_changed(&state);
+
+    // distance tick
+    state.current_distance_tick--;
+    if (state.current_distance_tick == 0)
+    {
+        state.current_distance_tick = state.round_distance_ticks;
+        state.current_distance++;
+    }
+    if (state.current_distance == state.round_distance)
+    {
+        queue_scene(&scene_upgrade_menu);
+    }
 }
 
 struct scene scene_gameplay = {

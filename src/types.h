@@ -101,6 +101,12 @@ struct task
 #define STRUCT_MAX_PLAYABLES 4
 struct game_state
 {
+  uint8_t round;
+  uint8_t round_tasks;
+  uint8_t round_distance;
+  uint8_t current_distance;
+  uint8_t round_distance_ticks;
+  uint8_t current_distance_tick;
   uint8_t cars;
   uint8_t round_score;
   struct player_position player_positions[STRUCT_MAX_PLAYABLES];
