@@ -51,7 +51,6 @@ uint8_t _player_y_adjust_tile[4] = {TRAIN_CAR_HEIGHT / 8 * 0, TRAIN_CAR_HEIGHT /
 
 #define RANDOM_LOWER_FLOOR_POSITION (40 + (rand() % 40))
 
-#define SPRINT_TICKS 10
 #define TOOL_RAISE_PIXELS 4
 void update_tool_cars(struct game_state *state)
 {
@@ -179,7 +178,7 @@ void handle_input(struct game_state *state, uint8_t player)
             state->player_positions[player].speed = state->walk_speed;
             state->player_positions[player].continued_direction = 0;
         }
-        if (state->player_positions[player].continued_direction > -SPRINT_TICKS)
+        if (state->player_positions[player].continued_direction > -state->run_ticks)
         {
             state->player_positions[player].continued_direction -= 1;
         }
@@ -196,7 +195,7 @@ void handle_input(struct game_state *state, uint8_t player)
             state->player_positions[player].speed = state->walk_speed;
             state->player_positions[player].continued_direction = 0;
         }
-        if (state->player_positions[player].continued_direction < SPRINT_TICKS)
+        if (state->player_positions[player].continued_direction < (int8_t) state->run_ticks)
         {
             state->player_positions[player].continued_direction += 1;
         }
@@ -1021,7 +1020,8 @@ struct game_state starter_state = {
     .cars = 1,
     .round_score = 0,
     .walk_speed = 1,
-    .run_speed = 2,
+    .run_speed = 1,
+    .run_ticks = 14,
     .task_speed = 1,
     .player_animations = PLAYER_ANIMATIONS_INIT,
     .player_positions = PLAYER_START_POSITIONS,
@@ -1045,7 +1045,7 @@ void init_state(uint8_t round)
     state.round_tasks = get_round_tasks(round);
 }
 
-void advance_state()
+void advance_state(void)
 {
     state.round += 1;
     // rounds get longer

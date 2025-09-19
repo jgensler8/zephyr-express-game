@@ -24,8 +24,8 @@ void main(void)
 
   // queue_scene(&scene_main_menu);
   init_state(0);
-  queue_scene(&scene_gameplay);
-  // queue_scene(&scene_upgrade_menu);
+  // queue_scene(&scene_gameplay);
+  queue_scene(&scene_upgrade_menu);
   // queue_scene(&scene_tutorial);
   while (1)
   {

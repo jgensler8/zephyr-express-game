@@ -112,6 +112,7 @@ struct game_state
   uint16_t current_distance_tick;
   uint8_t walk_speed;
   uint8_t run_speed;
+  uint8_t run_ticks;
   uint8_t task_speed;
   uint8_t cars;
   uint8_t round_score;
@@ -129,6 +130,7 @@ extern struct game_state default_state;
 extern struct game_state starter_state;
 extern struct game_state state;
 void init_state(uint8_t round);
+void advance_state(void);
 
 struct scene
 {

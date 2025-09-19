@@ -18,7 +18,10 @@ static uint8_t cursor_focus;
 static uint8_t upgrade_cursor_focus;
 uint8_t main_menu_x[] = {PLATFORM_X_ADJUST + 8, PLATFORM_X_ADJUST + 8};
 uint8_t main_menu_y[] = {PLATFORM_Y_ADJUST + 8 * 5, PLATFORM_Y_ADJUST + 8 * 6};
-uint8_t upgrade_select_menu_x[] = {
+#define NUM_UPGRADES 9
+uint8_t upgrade_select_menu_x[NUM_UPGRADES] = {
+    PLATFORM_X_ADJUST + 8,
+    PLATFORM_X_ADJUST + 8,
     PLATFORM_X_ADJUST + 8,
     PLATFORM_X_ADJUST + 8,
     PLATFORM_X_ADJUST + 8,
@@ -27,7 +30,7 @@ uint8_t upgrade_select_menu_x[] = {
     PLATFORM_X_ADJUST + 8,
     PLATFORM_X_ADJUST + 8,
 };
-uint8_t upgrade_select_menu_y[] = {
+uint8_t upgrade_select_menu_y[NUM_UPGRADES] = {
     PLATFORM_Y_ADJUST + 8 * 2,
     PLATFORM_Y_ADJUST + 8 * 3,
     PLATFORM_Y_ADJUST + 8 * 4,
@@ -35,6 +38,8 @@ uint8_t upgrade_select_menu_y[] = {
     PLATFORM_Y_ADJUST + 8 * 6,
     PLATFORM_Y_ADJUST + 8 * 7,
     PLATFORM_Y_ADJUST + 8 * 8,
+    PLATFORM_Y_ADJUST + 8 * 9,
+    PLATFORM_Y_ADJUST + 8 * 10,
 };
 uint8_t upgrade_confirm_menu_x[] = {PLATFORM_X_ADJUST + 8, PLATFORM_X_ADJUST + 8};
 uint8_t upgrade_confirm_menu_y[] = {PLATFORM_Y_ADJUST + 8 * 2, PLATFORM_Y_ADJUST + 8 * 3};
@@ -87,6 +92,14 @@ uint8_t can_upgrade(uint8_t cursor_focus)
         return state.tools[TOOL_CAT].unlocked == 0;
     case 4:
         return state.tools[TOOL_MUSIC].unlocked == 0;
+    case 5:
+        return state.run_speed == 3 && state.walk_speed < 2;
+    case 6:
+        return state.run_ticks > 6;
+    case 7:
+        return state.run_speed < 3;
+    case 8:
+        return state.task_speed < 3;
     default:
         break;
     }
@@ -112,8 +125,16 @@ void do_upgrade(uint8_t cursor_focus)
         state.tools[TOOL_MUSIC].unlocked = 1;
         break;
     case 5:
+        state.walk_speed += 1;
         break;
     case 6:
+        state.run_ticks -= 2;
+        break;
+    case 7:
+        state.run_speed += 1;
+        break;
+    case 8:
+        state.task_speed += 1;
         break;
     default:
         break;
@@ -198,7 +219,11 @@ void scene_upgrade_menu_loop(void)
             // 5
             font_print(2, 7, "WALK SPEED UP");
             // 6
-            font_print(2, 8, "TASK SPEED UP");
+            font_print(2, 8, "RUN SOONER");
+            // 7
+            font_print(2, 9, "RUN SPEED UP");
+            // 8
+            font_print(2, 10, "TASK SPEED UP");
             break;
         case FOCUS_UPGRADE_CONFIRM:
             menu_x = upgrade_confirm_menu_x;
@@ -250,7 +275,7 @@ void scene_upgrade_menu_loop(void)
         }
         else
         {
-            handle_input_up_down(7);
+            handle_input_up_down(NUM_UPGRADES);
         }
         break;
     case FOCUS_UPGRADE_CONFIRM:
