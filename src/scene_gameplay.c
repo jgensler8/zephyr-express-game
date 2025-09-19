@@ -142,9 +142,13 @@ void maybe_interpolate_direction(struct game_state *state, uint8_t player)
     }
     // on stairs, we may have moved above / below lines
     // left of upper left drop
-    if (PLAYER_X < 24)
+    if (PLAYER_X < 24 && PLAYER_Y <= TRAIN_FLOOR_BASELINE)
     {
         PLAYER_Y = TRAIN_FLOOR_BASELINE;
+    }
+    else if (PLAYER_X < 40 && PLAYER_Y > TRAIN_FLOOR_BASELINE)
+    {
+        PLAYER_X = 40;
     }
     // right of lower left drop
     else if (40 < PLAYER_X && PLAYER_X < (40 + 10) && PLAYER_Y >= TRAIN_FLOOR_BASELINE)
