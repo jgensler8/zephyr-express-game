@@ -1014,6 +1014,28 @@ void init_state(uint8_t round)
     state.round_tasks = get_round_tasks(round);
 }
 
+void advance_state()
+{
+    state.round += 1;
+    // rounds get longer
+    if (1 <= state.round && state.round <= 4)
+    {
+        state.round_distance_ticks = 4;
+    }
+    else if (5 <= state.round && state.round <= 8)
+    {
+        state.round_distance_ticks = 6;
+    }
+    else
+    {
+        state.round_distance_ticks = 10;
+    }
+    state.round_tasks = get_round_tasks(state.round);
+    // reset current state
+    state.current_distance = 0;
+    state.current_distance_tick = 0;
+}
+
 void scene_gameplay_init(void)
 {
     FILL_BKG_EMPTY;

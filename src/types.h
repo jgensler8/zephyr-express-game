@@ -110,6 +110,7 @@ struct game_state
   uint16_t current_distance_tick;
   uint8_t cars;
   uint8_t round_score;
+  uint8_t unlocks_left;
   struct player_position player_positions[STRUCT_MAX_PLAYABLES];
   uint8_t player_car_changed[STRUCT_MAX_PLAYABLES];
   struct animation_state player_animations[STRUCT_MAX_PLAYABLES];
