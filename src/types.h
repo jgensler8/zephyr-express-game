@@ -47,6 +47,8 @@ struct player_position
   uint8_t x;
   int8_t y;
   int8_t direction;
+  uint8_t speed;
+  int8_t continued_direction;
 };
 
 enum TOOL
@@ -108,6 +110,9 @@ struct game_state
   uint8_t current_distance;
   uint16_t round_distance_ticks;
   uint16_t current_distance_tick;
+  uint8_t walk_speed;
+  uint8_t run_speed;
+  uint8_t task_speed;
   uint8_t cars;
   uint8_t round_score;
   uint8_t unlocks_left;

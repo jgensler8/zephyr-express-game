@@ -51,6 +51,7 @@ uint8_t _player_y_adjust_tile[4] = {TRAIN_CAR_HEIGHT / 8 * 0, TRAIN_CAR_HEIGHT /
 
 #define RANDOM_LOWER_FLOOR_POSITION (40 + (rand() % 40))
 
+#define SPRINT_TICKS 10
 #define TOOL_RAISE_PIXELS 4
 void update_tool_cars(struct game_state *state)
 {
@@ -91,66 +92,40 @@ uint8_t tool_near(struct game_state *state, enum TOOL tool, uint8_t player)
 }
 void maybe_interpolate_direction(struct game_state *state, uint8_t player)
 {
+#define PLAYER_SPEED state->player_positions[player].speed
 #define PLAYER_X state->player_positions[player].x
 #define PLAYER_Y state->player_positions[player].y
 #define PLAYER_DIRECTION state->player_positions[player].direction
 #define TRAIN_RIGHT_STAIRS_UPPER 119
 #define TRAIN_STAIRS_LEN TRAIN_FLOOR_SEPARATION
     // right ladder enter top
-    if (PLAYER_X == TRAIN_RIGHT_STAIRS_UPPER && PLAYER_Y == TRAIN_FLOOR_BASELINE && PLAYER_DIRECTION == DIRECTION_LEFT)
-    {
-        // right stays same but left goes up
-        PLAYER_X -= 1;
-        PLAYER_Y -= 1;
-    }
-    else if ((PLAYER_X == TRAIN_RIGHT_STAIRS_UPPER - TRAIN_STAIRS_LEN) && PLAYER_Y == TRAIN_UPPER_FLOOR && PLAYER_DIRECTION == DIRECTION_RIGHT)
-    {
-        // left stays same but right is down
-        PLAYER_X += 1;
-        PLAYER_Y += 1;
-    }
-    else if ((TRAIN_RIGHT_STAIRS_UPPER - TRAIN_STAIRS_LEN) < PLAYER_X && PLAYER_X < TRAIN_RIGHT_STAIRS_UPPER && TRAIN_UPPER_FLOOR < PLAYER_Y && PLAYER_Y < TRAIN_FLOOR_BASELINE)
+    if ((TRAIN_RIGHT_STAIRS_UPPER - TRAIN_STAIRS_LEN) < PLAYER_X && PLAYER_X < TRAIN_RIGHT_STAIRS_UPPER && TRAIN_UPPER_FLOOR <= PLAYER_Y && PLAYER_Y <= TRAIN_FLOOR_BASELINE)
     {
         if (PLAYER_DIRECTION == DIRECTION_LEFT)
         {
-            PLAYER_X -= 1;
-            PLAYER_Y -= 1;
+            PLAYER_X -= PLAYER_SPEED;
+            PLAYER_Y -= PLAYER_SPEED;
         }
         else if (PLAYER_DIRECTION == DIRECTION_RIGHT)
         {
-            PLAYER_X += 1;
-            PLAYER_Y += 1;
+            PLAYER_X += PLAYER_SPEED;
+            PLAYER_Y += PLAYER_SPEED;
         }
     }
-    // left drop point top level
-    else if (PLAYER_X == 24 && PLAYER_Y == TRAIN_UPPER_FLOOR)
-    {
-        PLAYER_Y = TRAIN_FLOOR_BASELINE;
-    }
-    else if (PLAYER_X == 40 && PLAYER_Y == TRAIN_FLOOR_BASELINE)
-    {
-        PLAYER_Y = TRAIN_LOWER_FLOOR;
-    }
-    // right stirs leave bottom
+    // right stairs leave bottom
 #define TRAIN_RIGHT_STAIRS_LOWER 120
-    else if (PLAYER_X == TRAIN_RIGHT_STAIRS_LOWER && PLAYER_Y == TRAIN_LOWER_FLOOR && PLAYER_DIRECTION == DIRECTION_RIGHT)
-    {
-        // left stays same but right goes up
-        PLAYER_X += 1;
-        PLAYER_Y -= 1;
-    }
     // note: left stairs lead onto main floor so no exception needed for backtracking
-    else if (TRAIN_RIGHT_STAIRS_LOWER < PLAYER_X && PLAYER_X < (TRAIN_RIGHT_STAIRS_LOWER + TRAIN_STAIRS_LEN) && TRAIN_LOWER_FLOOR > PLAYER_Y && PLAYER_Y > TRAIN_FLOOR_BASELINE)
+    else if (TRAIN_RIGHT_STAIRS_LOWER < PLAYER_X && PLAYER_X < (TRAIN_RIGHT_STAIRS_LOWER + TRAIN_STAIRS_LEN) && TRAIN_LOWER_FLOOR >= PLAYER_Y && PLAYER_Y > TRAIN_FLOOR_BASELINE)
     {
         if (PLAYER_DIRECTION == DIRECTION_LEFT)
         {
-            PLAYER_X -= 1;
-            PLAYER_Y += 1;
+            PLAYER_X -= PLAYER_SPEED;
+            PLAYER_Y += PLAYER_SPEED;
         }
         else if (PLAYER_DIRECTION == DIRECTION_RIGHT)
         {
-            PLAYER_X += 1;
-            PLAYER_Y -= 1;
+            PLAYER_X += PLAYER_SPEED;
+            PLAYER_Y -= PLAYER_SPEED;
         }
     }
     // all other movement
@@ -158,12 +133,33 @@ void maybe_interpolate_direction(struct game_state *state, uint8_t player)
     {
         if (PLAYER_DIRECTION == DIRECTION_LEFT && PLAYER_X > 0)
         {
-            PLAYER_X += DIRECTION_LEFT;
+            PLAYER_X -= PLAYER_SPEED;
         }
         else if (PLAYER_DIRECTION == DIRECTION_RIGHT && PLAYER_X < TRAIN_CAR_LEN)
         {
-            PLAYER_X += DIRECTION_RIGHT;
+            PLAYER_X += PLAYER_SPEED;
         }
+    }
+    // on stairs, we may have moved above / below lines
+    // left of upper left drop
+    if (PLAYER_X < 24)
+    {
+        PLAYER_Y = TRAIN_FLOOR_BASELINE;
+    }
+    // right of lower left drop
+    else if (40 < PLAYER_X && PLAYER_X < (40 + 10) && PLAYER_Y >= TRAIN_FLOOR_BASELINE)
+    {
+        PLAYER_Y = TRAIN_LOWER_FLOOR;
+    }
+    // left of stairs to upper
+    else if (24 < PLAYER_X && PLAYER_X <= (TRAIN_RIGHT_STAIRS_UPPER - TRAIN_STAIRS_LEN) && PLAYER_Y < TRAIN_FLOOR_BASELINE)
+    {
+        PLAYER_Y = TRAIN_UPPER_FLOOR;
+    }
+    // right of right stairs
+    else if (TRAIN_RIGHT_STAIRS_LOWER + TRAIN_STAIRS_LEN <= PLAYER_X)
+    {
+        PLAYER_Y = TRAIN_FLOOR_BASELINE;
     }
 }
 void handle_input(struct game_state *state, uint8_t player)
@@ -174,14 +170,42 @@ void handle_input(struct game_state *state, uint8_t player)
     if (joy & J_LEFT)
     {
         state->player_positions[player].direction = DIRECTION_LEFT;
+        if (state->player_positions[player].continued_direction > 0)
+        {
+            state->player_positions[player].speed = state->walk_speed;
+            state->player_positions[player].continued_direction = 0;
+        }
+        if (state->player_positions[player].continued_direction > -SPRINT_TICKS)
+        {
+            state->player_positions[player].continued_direction -= 1;
+        }
+        else
+        {
+            state->player_positions[player].speed = state->run_speed;
+        }
     }
     else if (joy & J_RIGHT)
     {
         state->player_positions[player].direction = DIRECTION_RIGHT;
+        if (state->player_positions[player].continued_direction < 0)
+        {
+            state->player_positions[player].speed = state->walk_speed;
+            state->player_positions[player].continued_direction = 0;
+        }
+        if (state->player_positions[player].continued_direction < SPRINT_TICKS)
+        {
+            state->player_positions[player].continued_direction += 1;
+        }
+        else
+        {
+            state->player_positions[player].speed = state->run_speed;
+        }
     }
     else
     {
+        state->player_positions[player].speed = state->walk_speed;
         state->player_positions[player].direction = DIRECTION_NONE;
+        state->player_positions[player].continued_direction = 0;
     }
     maybe_interpolate_direction(state, player);
 
@@ -992,6 +1016,9 @@ struct game_state starter_state = {
     .open_task_count = 0,
     .cars = 1,
     .round_score = 0,
+    .walk_speed = 1,
+    .run_speed = 2,
+    .task_speed = 1,
     .player_animations = PLAYER_ANIMATIONS_INIT,
     .player_positions = PLAYER_START_POSITIONS,
     .tools = {
@@ -1010,7 +1037,7 @@ void init_state(uint8_t round)
 {
     state = starter_state;
     state.round = round;
-    state.round_distance_ticks = 1;
+    state.round_distance_ticks = 10;
     state.round_tasks = get_round_tasks(round);
 }
 
