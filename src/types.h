@@ -79,6 +79,13 @@ struct task
   uint8_t progress;
 };
 
+enum difficulty
+{
+  DIFFICULTY_CASUAL,
+  DIFFICULTY_EASY,
+  DIFFICULTY_HARD,
+};
+
 // 4 player sprites
 // 5 tools
 // 10 tasks
@@ -105,6 +112,7 @@ struct task
 #define ROUND_DISTANCE 100
 struct game_state
 {
+  enum difficulty difficulty;
   uint8_t round;
   uint8_t round_tasks;
   uint8_t current_distance;
@@ -129,7 +137,7 @@ struct game_state
 extern struct game_state default_state;
 extern struct game_state starter_state;
 extern struct game_state state;
-void init_state(uint8_t round);
+void init_state(enum difficulty difficulty);
 void advance_state(void);
 
 struct scene

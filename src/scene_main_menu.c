@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "scenes.h"
 #include "gen/cursor.h"
+#include "sound.h"
 
 #define MENU_START_TILE_X 7
 #define MENU_START_TILE_Y 6
@@ -35,6 +36,7 @@ void main_menu_loop(void)
         {
             focus = FOCUS_MAX - 1;
         }
+        sound_on_menu_select();
     }
     else if (PRESSED(0, J_UP))
     {
@@ -43,6 +45,7 @@ void main_menu_loop(void)
         {
             focus = 0;
         }
+        sound_on_menu_select();
     }
     else if (PRESSED(0, J_A))
     {
@@ -52,6 +55,7 @@ void main_menu_loop(void)
                 &scene_tutorial,
             };
         queue_scene(scenes_next[focus]);
+        sound_on_menu_confirm();
     }
 
     // render

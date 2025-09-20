@@ -2,6 +2,7 @@
 #include "font.h"
 #include "input.h"
 #include "scenes.h"
+#include "sound.h"
 
 #define MENU_START_TILE_X 4
 #define MENU_START_TILE_Y 6
@@ -41,6 +42,7 @@ void difficulty_select_loop(void)
         {
             focus = FOCUS_MAX - 1;
         }
+        sound_on_menu_select();
     }
     else if (PRESSED(0, J_UP))
     {
@@ -49,24 +51,18 @@ void difficulty_select_loop(void)
         {
             focus = 0;
         }
+        sound_on_menu_select();
     }
     else if (PRESSED(0, J_A))
     {
-        state = default_state;
-        switch (focus)
-        {
-        case 0:
-            break;
-        case 1:
-            break;
-        case 2:
-            break;
-        };
+        init_state(focus);
         queue_scene(&scene_gameplay);
+        sound_on_menu_confirm();
     }
     else if (PRESSED(0, J_B))
     {
         queue_scene(&scene_main_menu);
+        sound_on_menu_back();
     }
 
     // render
@@ -75,23 +71,35 @@ void difficulty_select_loop(void)
         fill_bkg_rect(0, 10, 20, 10, 0);
         font_print(1, 10, "COLLISION");
         font_print(1, 12, "ANGRY CUSTOMERS");
-        font_print(1, 14, "REWARDS");
+        font_print(1, 14, "ROUND UNLOCKS");
         switch (focus)
         {
-        case 0:
+        case DIFFICULTY_CASUAL:
+#if NINTENDO_NES
             font_print(2, 11, "NONE");
+#else
+            font_print(2, 11, "NOT SUPPORTED");
+#endif
             font_print(2, 13, "NONE");
-            font_print(2, 15, "GENEROUS");
+            font_print(2, 15, "TWO");
             break;
-        case 1:
+        case DIFFICULTY_EASY:
+#if NINTENDO_NES
             font_print(2, 11, "ENABLED");
+#else
+            font_print(2, 11, "NOT SUPPORTED");
+#endif
             font_print(2, 13, "FEW");
-            font_print(2, 15, "GENEROUS");
+            font_print(2, 15, "TWO");
             break;
-        case 2:
+        case DIFFICULTY_HARD:
+#if NINTENDO_NES
             font_print(2, 11, "ENABLED");
+#else
+            font_print(2, 11, "NOT SUPPORTED");
+#endif
             font_print(2, 13, "MANY");
-            font_print(2, 15, "BASIC");
+            font_print(2, 15, "ONE");
             break;
         }
     }

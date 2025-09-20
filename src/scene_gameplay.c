@@ -3,6 +3,7 @@
 #include "input.h"
 #include <rand.h>
 #include "scenes.h"
+#include "sound.h"
 #include "gen/conductor_0.h"
 #include "gen/conductor_1.h"
 #include "gen/conductor_2.h"
@@ -245,6 +246,7 @@ void handle_input(struct game_state *state, uint8_t player)
             // drop tool
             state->tools[held].player_holding = PLAYER_HOLDING_NONE;
             state->tools[held].y += TOOL_RAISE_PIXELS;
+            sound_on_tool_released();
         }
         else
         {
@@ -256,18 +258,8 @@ void handle_input(struct game_state *state, uint8_t player)
                     state->tools[tool].player_holding == PLAYER_HOLDING_NONE &&
                     tool_near(state, tool, player))
                 {
-                    if (state->tools[tool].player_holding == PLAYER_HOLDING_NONE)
-                    {
-                        state->tools[tool].player_holding = player;
-                        // state->tools[tool].y -= 16;
-                        break;
-                    }
-                    else if (state->tools[tool].player_holding == player)
-                    {
-                        state->tools[tool].player_holding = PLAYER_HOLDING_NONE;
-                        // state->tools[tool].y += 16;
-                        break;
-                    }
+                    state->tools[tool].player_holding = player;
+                    sound_on_tool_acquired();
                 }
             }
         }
@@ -882,6 +874,14 @@ void handle_task_progress(struct game_state *state)
                         state->round_score += 1;
                         state->open_task_count -= 1;
                         maybe_undraw_task_for_all_players(state, car, t_i);
+                        sound_on_task_complete();
+                    }
+                    else
+                    {
+                        if (state->tasks[car][t_i].progress % (state->task_speed * 16) == 0)
+                        {
+                            sound_on_task_tick();
+                        }
                     }
                     // only handle one tasks progress
                     break;
@@ -891,6 +891,7 @@ void handle_task_progress(struct game_state *state)
     }
 }
 
+int8_t direction = -1;
 void maybe_create_tasks(struct game_state *state)
 {
     if (state->open_task_count >= state->max_open_tasks)
@@ -902,9 +903,10 @@ void maybe_create_tasks(struct game_state *state)
     uint8_t iters = 0;
     while (!state->tools[tool].unlocked && iters < TOOL_COUNT)
     {
-        tool = (tool + 1) % TOOL_COUNT;
+        tool = (tool + direction) % TOOL_COUNT;
         iters++;
     }
+    direction = direction == 1 ? -1 : 1;
     // pick car
     // do not spawn in the same car as the tool (except when cars == 1)
     uint8_t car = rand() % state->cars;
@@ -1004,12 +1006,13 @@ struct game_state starter_state = {
     },
 };
 
-void init_state(uint8_t round)
+void init_state(uint8_t difficulty)
 {
     state = starter_state;
-    state.round = round;
-    state.round_distance_ticks = 10;
-    state.round_tasks = get_round_tasks(round);
+    state.difficulty = 0;
+    state.round = 0;
+    state.round_distance_ticks = 16;
+    state.round_tasks = get_round_tasks(0);
 }
 
 void advance_state(void)
@@ -1018,15 +1021,15 @@ void advance_state(void)
     // rounds get longer
     if (1 <= state.round && state.round <= 4)
     {
-        state.round_distance_ticks = 4;
+        state.round_distance_ticks = 16;
     }
     else if (5 <= state.round && state.round <= 8)
     {
-        state.round_distance_ticks = 6;
+        state.round_distance_ticks = 24;
     }
     else
     {
-        state.round_distance_ticks = 10;
+        state.round_distance_ticks = 32;
     }
     state.round_tasks = get_round_tasks(state.round);
     // reset current state
@@ -1036,6 +1039,7 @@ void advance_state(void)
     struct player_position player_start_positions[STRUCT_MAX_PLAYABLES] = PLAYER_START_POSITIONS;
     for (uint8_t player = 0; player < MAX_PLAYERS; player++)
     {
+        state.player_positions[player].car = player_start_positions[player].car;
         state.player_positions[player].x = player_start_positions[player].x;
         state.player_positions[player].y = player_start_positions[player].y;
     }

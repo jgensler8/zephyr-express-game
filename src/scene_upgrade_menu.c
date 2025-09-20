@@ -3,6 +3,7 @@
 #include "font.h"
 #include "input.h"
 #include <gbdk/metasprites.h>
+#include "sound.h"
 #include "gen/cursor.h"
 
 enum upgrade_focus
@@ -53,7 +54,16 @@ void scene_upgrade_menu_init(void)
 
     focus = FOCUS_MAIN;
     last_focus = !FOCUS_MAIN;
-    state.unlocks_left += 1;
+    switch (state.difficulty)
+    {
+    case DIFFICULTY_CASUAL:
+    case DIFFICULTY_EASY:
+        state.unlocks_left += 2;
+        break;
+    case DIFFICULTY_HARD:
+        state.unlocks_left += 1;
+        break;
+    }
 
     set_sprite_data(0, cursor_TILE_COUNT, cursor_tiles);
     set_sprite_tile(0, GET_8x16_SPRITE_TILE(0));
@@ -68,6 +78,10 @@ void handle_input_up_down(uint8_t max)
         {
             cursor_focus = max - 1;
         }
+        else
+        {
+            sound_on_menu_select();
+        }
     }
     else if (PRESSED(0, J_UP))
     {
@@ -75,6 +89,10 @@ void handle_input_up_down(uint8_t max)
         if (cursor_focus >= max)
         {
             cursor_focus = 0;
+        }
+        else
+        {
+            sound_on_menu_select();
         }
     }
 }
@@ -276,6 +294,7 @@ void scene_upgrade_menu_loop(void)
                 if (state.unlocks_left > 0)
                 {
                     focus = FOCUS_UPGRADE_SELECT;
+                    sound_on_menu_confirm();
                 }
                 break;
             case 1:
@@ -293,6 +312,7 @@ void scene_upgrade_menu_loop(void)
         if (PRESSED(0, J_B))
         {
             focus = FOCUS_MAIN;
+            sound_on_menu_back();
         }
         else if (PRESSED(0, J_A))
         {
@@ -300,6 +320,7 @@ void scene_upgrade_menu_loop(void)
             {
                 upgrade_cursor_focus = cursor_focus;
                 focus = FOCUS_UPGRADE_CONFIRM;
+                sound_on_menu_confirm();
             }
         }
         else
@@ -311,12 +332,21 @@ void scene_upgrade_menu_loop(void)
         if (PRESSED(0, J_B))
         {
             focus = FOCUS_UPGRADE_SELECT;
+            sound_on_menu_back();
         }
         else if (PRESSED(0, J_A))
         {
             do_upgrade(upgrade_cursor_focus);
             state.unlocks_left -= 1;
-            focus = FOCUS_MAIN;
+            if (state.unlocks_left == 0)
+            {
+                focus = FOCUS_MAIN;
+            }
+            else
+            {
+                focus = FOCUS_UPGRADE_SELECT;
+            }
+            sound_on_menu_confirm();
         }
         else
         {

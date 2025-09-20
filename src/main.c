@@ -3,6 +3,7 @@
 #include "scenes.h"
 #include "input.h"
 #include "font.h"
+#include "sound.h"
 
 struct game_state state;
 
@@ -20,12 +21,13 @@ void main(void)
   SHOW_SPRITES;
   SHOW_BKG;
   FILL_BKG_EMPTY;
+  sound_init();
   joypad_init(MAX_PLAYABLES, &joypads);
 
-  // queue_scene(&scene_main_menu);
+  queue_scene(&scene_main_menu);
   init_state(0);
   // queue_scene(&scene_gameplay);
-  queue_scene(&scene_upgrade_menu);
+  // queue_scene(&scene_upgrade_menu);
   // queue_scene(&scene_tutorial);
   while (1)
   {
