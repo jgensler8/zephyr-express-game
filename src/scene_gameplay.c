@@ -317,8 +317,6 @@ const uint8_t _car_x[MAX_CARS][TILES_PER_CAR] = {
     X_PER_CAR(3),
     X_PER_CAR(6),
     X_PER_CAR(9),
-    X_PER_CAR(12),
-    X_PER_CAR(15),
 };
 void draw_train_map(struct game_state *state)
 {
@@ -1079,11 +1077,11 @@ void advance_state(void)
         }
         else if (state.difficulty == DIFFICULTY_EASY)
         {
-            state.customer_happiness = -10;
+            state.customer_happiness = -30;
         }
         else
         {
-            state.customer_happiness = -30;
+            state.customer_happiness = -40;
         }
     }
     else
@@ -1095,11 +1093,11 @@ void advance_state(void)
         }
         else if (state.difficulty == DIFFICULTY_EASY)
         {
-            state.customer_happiness = -20;
+            state.customer_happiness = -40;
         }
         else
         {
-            state.customer_happiness = -60;
+            state.customer_happiness = -80;
         }
     }
     state.round_tasks = get_round_tasks(state.round);

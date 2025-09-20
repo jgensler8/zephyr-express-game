@@ -264,13 +264,17 @@ void scene_upgrade_menu_loop(void)
                 font_print(2, 6, "MUSIC  UNLOCKED");
             }
             // 5
-            if (state.run_speed < WALK_SPEED_MAX)
+            if (state.run_speed < RUN_SPEED_MAX)
             {
                 font_print(2, 7, "NEED MAX RUN SPEED");
             }
-            else
+            else if (state.walk_speed < WALK_SPEED_MAX)
             {
                 font_print(2, 7, "WALK SPEED UP");
+            }
+            else
+            {
+                font_print(2, 7, "MAX WALK SPEED");
             }
             // 6
             if (state.run_ticks > RUN_TICKS_MIN)
