@@ -420,8 +420,28 @@ void draw_customer_status(struct game_state *state)
         CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 4,
         CUSTOMER_STATUS_SPRITE_WIDTH_TILES * 5,
     };
-    uint8_t sprite_starts_index = state->round_score;
-    if (state->round_score > 5)
+    uint8_t sprite_starts_index = 0;
+    if (state->customer_happiness < -64)
+    {
+        sprite_starts_index = 0;
+    }
+    else if (state->customer_happiness < -32)
+    {
+        sprite_starts_index = 1;
+    }
+    else if (state->customer_happiness < 0)
+    {
+        sprite_starts_index = 2;
+    }
+    else if (state->customer_happiness < 32)
+    {
+        sprite_starts_index = 3;
+    }
+    else if (state->customer_happiness < 64)
+    {
+        sprite_starts_index = 4;
+    }
+    else
     {
         sprite_starts_index = 5;
     }
@@ -873,6 +893,7 @@ void handle_task_progress(struct game_state *state)
                     {
                         state->round_score += 1;
                         state->open_task_count -= 1;
+                        state->customer_happiness += state->tasks[car][t_i].happiness_reward;
                         maybe_undraw_task_for_all_players(state, car, t_i);
                         sound_on_task_complete();
                     }
@@ -924,6 +945,27 @@ void maybe_create_tasks(struct game_state *state)
             // create task
             state->tasks[car][current_slot].tool = tool;
             state->tasks[car][current_slot].progress = TASK_PROGRESS_INIT;
+            switch (tool)
+            {
+            case TOOL_WIFI:
+                state->tasks[car][current_slot].happiness_reward = 1;
+                break;
+            case TOOL_WRENCH:
+            case TOOL_DRINK:
+                state->tasks[car][current_slot].happiness_reward = 3;
+                break;
+            case TOOL_CAT:
+                state->tasks[car][current_slot].happiness_reward = 5;
+                break;
+            case TOOL_MUSIC:
+                state->tasks[car][current_slot].happiness_reward = 7;
+                break;
+            }
+            if (state->difficulty == DIFFICULTY_CASUAL || state->difficulty == DIFFICULTY_EASY)
+            {
+                state->tasks[car][current_slot].happiness_reward += 2;
+            }
+
             state->open_task_count++;
             return;
         }
@@ -993,43 +1035,72 @@ struct game_state starter_state = {
     .run_ticks = 14,
     .task_speed = 1,
     .player_animations = PLAYER_ANIMATIONS_INIT,
-    .player_positions = PLAYER_START_POSITIONS,
     .tools = {
         // TOOL_WIFI
-        {
-            .unlocked = 1,
-            .car = 0,
-            .x = TOOL_START_POSITION_RIGHT,
-            .y = TRAIN_FLOOR_BASELINE,
-            .player_holding = PLAYER_HOLDING_NONE,
-        },
+        {.unlocked = 1},
     },
 };
 
 void init_state(uint8_t difficulty)
 {
     state = starter_state;
-    state.difficulty = 0;
-    state.round = 0;
-    state.round_distance_ticks = 16;
-    state.round_tasks = get_round_tasks(0);
+    state.difficulty = difficulty;
+    advance_state();
 }
 
 void advance_state(void)
 {
     state.round += 1;
+    // initial happiness
+    state.customer_happiness = 0;
     // rounds get longer
     if (1 <= state.round && state.round <= 4)
     {
         state.round_distance_ticks = 16;
+        if (state.difficulty == DIFFICULTY_CASUAL)
+        {
+            state.customer_happiness = 0;
+        }
+        else if (state.difficulty == DIFFICULTY_EASY)
+        {
+            state.customer_happiness = 0;
+        }
+        else
+        {
+            state.customer_happiness = -10;
+        }
     }
     else if (5 <= state.round && state.round <= 8)
     {
         state.round_distance_ticks = 24;
+        if (state.difficulty == DIFFICULTY_CASUAL)
+        {
+            state.customer_happiness = 0;
+        }
+        else if (state.difficulty == DIFFICULTY_EASY)
+        {
+            state.customer_happiness = -10;
+        }
+        else
+        {
+            state.customer_happiness = -30;
+        }
     }
     else
     {
         state.round_distance_ticks = 32;
+        if (state.difficulty == DIFFICULTY_CASUAL)
+        {
+            state.customer_happiness = 0;
+        }
+        else if (state.difficulty == DIFFICULTY_EASY)
+        {
+            state.customer_happiness = -20;
+        }
+        else
+        {
+            state.customer_happiness = -60;
+        }
     }
     state.round_tasks = get_round_tasks(state.round);
     // reset current state

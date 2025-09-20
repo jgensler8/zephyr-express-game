@@ -77,6 +77,7 @@ struct task
 {
   uint8_t tool;
   uint8_t progress;
+  uint8_t happiness_reward;
 };
 
 enum difficulty
@@ -104,7 +105,7 @@ enum difficulty
 #define MAX_NPCS 0
 #endif
 #define MAX_PLAYABLES (MAX_PLAYERS + MAX_NPCS)
-#define MAX_CARS 6
+#define MAX_CARS 4
 #define TASK_SLOTS_PER_CAR 8
 // this would force us to define several constants for struct init, lets just stick with 4
 #define STRUCT_MAX_PLAYABLES 4
@@ -118,17 +119,23 @@ struct game_state
   uint8_t current_distance;
   uint16_t round_distance_ticks;
   uint16_t current_distance_tick;
+#define WALK_SPEED_MAX 2
   uint8_t walk_speed;
+#define RUN_SPEED_MAX 4
   uint8_t run_speed;
+#define RUN_TICKS_MIN 6
   uint8_t run_ticks;
+#define TASK_SPEED_MAX 3
   uint8_t task_speed;
   uint8_t cars;
+  int16_t customer_happiness;
   uint8_t round_score;
   uint8_t unlocks_left;
   struct player_position player_positions[STRUCT_MAX_PLAYABLES];
   uint8_t player_car_changed[STRUCT_MAX_PLAYABLES];
   struct animation_state player_animations[STRUCT_MAX_PLAYABLES];
   struct tool tools[TOOL_COUNT];
+#define MAX_OPEN_TASKS_MAX 30
   uint8_t max_open_tasks;
   uint8_t open_task_count;
   struct task tasks[MAX_CARS][TASK_SLOTS_PER_CAR];
