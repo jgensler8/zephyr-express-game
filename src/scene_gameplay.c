@@ -7,7 +7,7 @@
 #include "gen/conductor_1.h"
 #include "gen/conductor_2.h"
 #include "gen/conductor_3.h"
-#ifdef NINTENDO_NEX
+#ifdef NINTENDO_NES
 #include "gen/player_banner_0.h"
 #include "gen/player_banner_1.h"
 #endif
@@ -195,7 +195,7 @@ void handle_input(struct game_state *state, uint8_t player)
             state->player_positions[player].speed = state->walk_speed;
             state->player_positions[player].continued_direction = 0;
         }
-        if (state->player_positions[player].continued_direction < (int8_t) state->run_ticks)
+        if (state->player_positions[player].continued_direction < (int8_t)state->run_ticks)
         {
             state->player_positions[player].continued_direction += 1;
         }
@@ -874,9 +874,10 @@ void handle_task_progress(struct game_state *state)
                 uint8_t task_on_lower_level = task_slot_x_y[t_i].y == LOWER_ROW_Y;
                 if ((tool_on_upper_level && task_on_upper_level) || (tool_on_lower_level && task_on_lower_level))
                 {
-                    state->tasks[car][t_i].progress -= 1;
+                    // might wrap bottom of uint8
+                    state->tasks[car][t_i].progress -= state->task_speed;
                     // handle completed task
-                    if (state->tasks[car][t_i].progress == 0)
+                    if (state->tasks[car][t_i].progress == 0 || state->tasks[car][t_i].progress > TASK_PROGRESS_INIT)
                     {
                         state->round_score += 1;
                         state->open_task_count -= 1;
@@ -954,48 +955,14 @@ struct game_state default_state = {
     .player_animations = PLAYER_ANIMATIONS_INIT,
 #define TOOL_START_POSITION_LEFT 12
 #define TOOL_START_POSITION_RIGHT (TRAIN_CAR_LEN - 12)
-    .tools = {
-        // TOOL_WIFI
-        {
-            .unlocked = 1,
-            .car = 0,
-            .x = TOOL_START_POSITION_RIGHT,
-            .y = TRAIN_FLOOR_BASELINE,
-            .player_holding = PLAYER_HOLDING_NONE,
-        },
-        // TOOL_WRENCH
-        {
-            .unlocked = 1,
-            .car = 1,
-            .x = TOOL_START_POSITION_LEFT,
-            .y = TRAIN_FLOOR_BASELINE,
-            .player_holding = PLAYER_HOLDING_NONE,
-        },
-        // TOOL_DRINK
-        {
-            .unlocked = 1,
-            .car = 1,
-            .x = TOOL_START_POSITION_RIGHT,
-            .y = TRAIN_FLOOR_BASELINE,
-            .player_holding = PLAYER_HOLDING_NONE,
-        },
-        // TOOL_CAT
-        {
-            .unlocked = 1,
-            .car = 2,
-            .x = TOOL_START_POSITION_LEFT,
-            .y = TRAIN_FLOOR_BASELINE,
-            .player_holding = PLAYER_HOLDING_NONE,
-        },
-        // TOOL_MUSIC
-        {
-            .unlocked = 1,
-            .car = 2,
-            .x = TOOL_START_POSITION_RIGHT,
-            .y = TRAIN_FLOOR_BASELINE,
-            .player_holding = PLAYER_HOLDING_NONE,
-        },
-    },
+#define TOOL_DEFAULTS {                         \
+    {.car = 0, .x = TOOL_START_POSITION_RIGHT}, \
+    {.car = 1, .x = TOOL_START_POSITION_LEFT},  \
+    {.car = 1, .x = TOOL_START_POSITION_RIGHT}, \
+    {.car = 2, .x = TOOL_START_POSITION_LEFT},  \
+    {.car = 2, .x = TOOL_START_POSITION_RIGHT}, \
+}
+    .tools = TOOL_DEFAULTS,
     .tasks = {
         // car 0
         {
@@ -1065,6 +1032,31 @@ void advance_state(void)
     // reset current state
     state.current_distance = 0;
     state.current_distance_tick = 0;
+    // reset player locations
+    struct player_position player_start_positions[STRUCT_MAX_PLAYABLES] = PLAYER_START_POSITIONS;
+    for (uint8_t player = 0; player < MAX_PLAYERS; player++)
+    {
+        state.player_positions[player].x = player_start_positions[player].x;
+        state.player_positions[player].y = player_start_positions[player].y;
+    }
+    // reset tool locations
+    struct tool tool_start_positions[TOOL_COUNT] = TOOL_DEFAULTS;
+    for (uint8_t tool = 0; tool < TOOL_COUNT; tool++)
+    {
+        state.tools[tool].car = tool_start_positions[tool].car;
+        state.tools[tool].x = tool_start_positions[tool].x;
+        state.tools[tool].y = TRAIN_FLOOR_BASELINE;
+        state.tools[tool].player_holding = PLAYER_HOLDING_NONE;
+    }
+    // recreate tasks
+    for (uint8_t car = 0; car < state.cars; car++)
+    {
+        for (uint8_t t_i = 0; t_i < TASK_SLOTS_PER_CAR; t_i++)
+        {
+            state.tasks[car][t_i].progress = 0;
+        }
+    }
+    state.open_task_count = 0;
 }
 
 void scene_gameplay_init(void)

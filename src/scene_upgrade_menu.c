@@ -78,6 +78,8 @@ void handle_input_up_down(uint8_t max)
         }
     }
 }
+// 1 meets criteria
+// 0 does not meet criteria
 uint8_t can_upgrade(uint8_t cursor_focus)
 {
     switch (cursor_focus)
@@ -85,13 +87,13 @@ uint8_t can_upgrade(uint8_t cursor_focus)
     case 0:
         return state.cars <= MAX_CARS - 1;
     case 1:
-        return state.tools[TOOL_WRENCH].unlocked == 0;
+        return state.cars >= 2 && state.tools[TOOL_WRENCH].unlocked == 0;
     case 2:
-        return state.tools[TOOL_DRINK].unlocked == 0;
+        return state.cars >= 2 && state.tools[TOOL_DRINK].unlocked == 0;
     case 3:
-        return state.tools[TOOL_CAT].unlocked == 0;
+        return state.cars >= 3 && state.tools[TOOL_CAT].unlocked == 0;
     case 4:
-        return state.tools[TOOL_MUSIC].unlocked == 0;
+        return state.cars >= 3 && state.tools[TOOL_MUSIC].unlocked == 0;
     case 5:
         return state.run_speed == 3 && state.walk_speed < 2;
     case 6:
@@ -181,7 +183,12 @@ void scene_upgrade_menu_loop(void)
                 font_print(2, 2, "ALL CARS PURCHASED");
             }
             // 1
-            if (can_upgrade(1))
+            if (state.cars < 2)
+            {
+                font_print(2, 3, "NEED 2 CARS");
+                font_print_numeric(7, 3, 2);
+            }
+            else if (can_upgrade(1))
             {
                 font_print(2, 3, "UNLOCK WRENCH");
             }
@@ -190,7 +197,12 @@ void scene_upgrade_menu_loop(void)
                 font_print(2, 3, "WRENCH UNLOCKED");
             }
             // 2
-            if (can_upgrade(2))
+            if (state.cars < 2)
+            {
+                font_print(2, 4, "NEED 2 CARS");
+                font_print_numeric(7, 4, 2);
+            }
+            else if (can_upgrade(2))
             {
                 font_print(2, 4, "UNLOCK DRINK");
             }
@@ -199,7 +211,12 @@ void scene_upgrade_menu_loop(void)
                 font_print(2, 4, "DRINK  UNLOCKED");
             }
             // 3
-            if (can_upgrade(3))
+            if (state.cars < 3)
+            {
+                font_print(2, 5, "NEED 3 CARS");
+                font_print_numeric(7, 5, 3);
+            }
+            else if (can_upgrade(3))
             {
                 font_print(2, 5, "UNLOCK CAT");
             }
@@ -208,7 +225,12 @@ void scene_upgrade_menu_loop(void)
                 font_print(2, 5, "CAT    UNLOCKED");
             }
             // 4
-            if (can_upgrade(4))
+            if (state.cars < 3)
+            {
+                font_print(2, 6, "NEED 3 CARS");
+                font_print_numeric(7, 6, 3);
+            }
+            else if (can_upgrade(4))
             {
                 font_print(2, 6, "UNLOCK MUSIC");
             }
@@ -217,7 +239,14 @@ void scene_upgrade_menu_loop(void)
                 font_print(2, 6, "MUSIC  UNLOCKED");
             }
             // 5
-            font_print(2, 7, "WALK SPEED UP");
+            if (state.run_speed < 3)
+            {
+                font_print(2, 7, "NEED MAX RUN SPEED");
+            }
+            else
+            {
+                font_print(2, 7, "WALK SPEED UP");
+            }
             // 6
             font_print(2, 8, "RUN SOONER");
             // 7
