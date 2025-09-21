@@ -247,6 +247,10 @@ void handle_input(struct game_state *state, uint8_t player)
             // drop tool
             state->tools[held].player_holding = PLAYER_HOLDING_NONE;
             state->tools[held].y += TOOL_RAISE_PIXELS;
+            if (state->tools[held].x > TRAIN_CAR_LEN)
+            {
+                state->tools[held].x = 1;
+            }
             sound_on_tool_released();
         }
         else

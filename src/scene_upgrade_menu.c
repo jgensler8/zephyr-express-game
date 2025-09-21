@@ -18,7 +18,7 @@ static enum upgrade_focus focus;
 static uint8_t cursor_focus;
 static uint8_t upgrade_cursor_focus;
 uint8_t main_menu_x[] = {PLATFORM_X_ADJUST + 8, PLATFORM_X_ADJUST + 8};
-uint8_t main_menu_y[] = {PLATFORM_Y_ADJUST + 8 * 5, PLATFORM_Y_ADJUST + 8 * 6};
+uint8_t main_menu_y[] = {PLATFORM_Y_ADJUST + 8 * 7, PLATFORM_Y_ADJUST + 8 * 8};
 #define NUM_UPGRADES 10
 uint8_t upgrade_select_menu_x[NUM_UPGRADES] = {
     PLATFORM_X_ADJUST + 8,
@@ -48,6 +48,7 @@ uint8_t upgrade_confirm_menu_x[] = {PLATFORM_X_ADJUST + 8, PLATFORM_X_ADJUST + 8
 uint8_t upgrade_confirm_menu_y[] = {PLATFORM_Y_ADJUST + 8 * 2, PLATFORM_Y_ADJUST + 8 * 3};
 static uint8_t *menu_x;
 static uint8_t *menu_y;
+static int8_t bonus_score;
 void scene_upgrade_menu_init(void)
 {
     HIDE_SPRITES_RANGE;
@@ -66,6 +67,28 @@ void scene_upgrade_menu_init(void)
         state.unlocks_left += 1;
         break;
     }
+    if (state.customer_happiness < -64)
+    {
+        bonus_score = -10;
+    }
+    else if (state.customer_happiness < -32)
+    {
+        bonus_score = -5;
+    }
+    else if (state.customer_happiness < 32)
+    {
+        bonus_score = 0;
+    }
+    else if (state.customer_happiness < 64)
+    {
+        bonus_score = 10;
+    }
+    else
+    {
+        bonus_score = 20;
+        state.unlocks_left += 1;
+    }
+    state.round_score += bonus_score;
 
     set_sprite_data(0, cursor_TILE_COUNT, cursor_tiles);
     set_sprite_tile(0, GET_8x16_SPRITE_TILE(0));
@@ -203,17 +226,37 @@ void scene_upgrade_menu_loop(void)
             menu_y = main_menu_y;
             font_print(1, 1, "ROUND OVER");
             font_print(1, 2, "SCORE");
-            font_print_numeric(10, 2, state.round_score);
-            font_print(2, 3, "GOOD");
-            if (state.unlocks_left > 0)
+            font_print_numeric_16(16, 2, state.round_score);
+            font_print(1, 3, "BONUS");
+            if (bonus_score < 0)
             {
-                font_print(2, 5, "UPGRADES");
+                font_print(2, 4, "MINUS");
+                font_print_numeric(16, 3, -1 * bonus_score);
+            }
+            else if (bonus_score == 20)
+            {
+                font_print(2, 4, "PERFECT");
+                font_print(2, 5, "ENJOY EXTRA UNLOCK");
+                font_print_numeric(16, 3, bonus_score);
             }
             else
             {
-                font_print(2, 5, "NO UNLOCKS LEFT");
+                font_print(7, 3, "PLUS");
+                font_print_numeric(16, 3, bonus_score);
             }
-            font_print(2, 6, "NEXT ROUND");
+            if (at_max_upgrades())
+            {
+                font_print(2, 7, "MAX UPGRADES");
+            }
+            else if (state.unlocks_left > 0)
+            {
+                font_print(2, 7, "UPGRADES");
+            }
+            else
+            {
+                font_print(2, 7, "NO UNLOCKS LEFT");
+            }
+            font_print(2, 8, "NEXT ROUND");
             break;
         case FOCUS_UPGRADE_SELECT:
             menu_x = upgrade_select_menu_x;

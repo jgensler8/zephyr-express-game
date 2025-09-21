@@ -46,3 +46,13 @@ void font_print_numeric(uint8_t x, uint8_t y, uint8_t num)
         num = num / 10;
     } while (num != 0);
 }
+void font_print_numeric_16(uint8_t x, uint8_t y, uint16_t num)
+{
+    do
+    {
+        uint8_t place = num % 10;
+        set_bkg_tile_xy(x, y, numeric_load_tile + place);
+        x--;
+        num = num / 10;
+    } while (num != 0);
+}

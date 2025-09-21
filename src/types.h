@@ -130,7 +130,7 @@ struct game_state
   uint8_t task_speed;
   uint8_t cars;
   int16_t customer_happiness;
-  uint8_t round_score;
+  uint16_t round_score;
   uint8_t unlocks_left;
   struct player_position player_positions[STRUCT_MAX_PLAYABLES];
   uint8_t player_car_changed[STRUCT_MAX_PLAYABLES];
