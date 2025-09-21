@@ -159,7 +159,7 @@ enum scene
 };
 
 #ifdef GAMEBOY
-#define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 20, 18, 0); vsync();
+#define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 20, 18, 0);
 #else
 #define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 32, 30, 0); vsync();
 #endif

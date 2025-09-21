@@ -266,7 +266,7 @@ void scene_upgrade_menu_loop(void)
             // 0
             if (can_upgrade(0))
             {
-                font_print(2, 2, "A2DD CAR");
+                font_print(2, 2, "ADD CAR");
             }
             else
             {
