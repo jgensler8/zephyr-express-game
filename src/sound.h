@@ -9,3 +9,4 @@ void sound_on_tool_acquired(void);
 void sound_on_tool_released(void);
 void sound_on_task_tick(void);
 void sound_on_task_complete(void);
+void sound_tick(void);

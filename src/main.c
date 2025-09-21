@@ -74,5 +74,6 @@ void main(void)
       scene_tutorial_loop();
       break;
     }
+    sound_tick();
   }
 }
