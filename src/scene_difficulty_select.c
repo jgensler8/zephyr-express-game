@@ -8,18 +8,18 @@
 #define MENU_START_TILE_Y 6
 #define FOCUS_MAX 3
 static uint8_t focus = 0;
-static uint8_t menu_x[FOCUS_MAX] = {
-    8 * MENU_START_TILE_X - 4,
-    8 * MENU_START_TILE_X - 4,
-    8 * MENU_START_TILE_X - 4,
+static const uint8_t cursor_menu_x[FOCUS_MAX] = {
+    PLATFORM_X_ADJUST + 8 * (MENU_START_TILE_X - 1),
+    PLATFORM_X_ADJUST + 8 * (MENU_START_TILE_X - 1),
+    PLATFORM_X_ADJUST + 8 * (MENU_START_TILE_X - 1),
 };
-static uint8_t menu_y[FOCUS_MAX] = {
+static const uint8_t cursor_menu_y[FOCUS_MAX] = {
     PLATFORM_Y_ADJUST + 8 * MENU_START_TILE_Y,
     PLATFORM_Y_ADJUST + 8 * (MENU_START_TILE_Y + 1),
     PLATFORM_Y_ADJUST + 8 * (MENU_START_TILE_Y + 2),
 };
 uint8_t last_focus;
-void difficulty_select_init(void)
+void scene_difficulty_select_init(void)
 {
     FILL_BKG_EMPTY;
     // font
@@ -31,9 +31,8 @@ void difficulty_select_init(void)
     // cursor (this is initiailzed in scene_main_menu)
     last_focus = 1;
     focus = 0;
-    move_sprite(0, menu_x[0], menu_y[0]);
 }
-void difficulty_select_loop(void)
+void scene_difficulty_select_loop(void)
 {
     if (PRESSED(0, J_DOWN))
     {
@@ -56,12 +55,12 @@ void difficulty_select_loop(void)
     else if (PRESSED(0, J_A))
     {
         init_state(focus);
-        queue_scene(&scene_gameplay);
+        queue_scene(SCENE_GAMEPLAY);
         sound_on_menu_confirm();
     }
     else if (PRESSED(0, J_B))
     {
-        queue_scene(&scene_main_menu);
+        queue_scene(SCENE_MAIN_MENU);
         sound_on_menu_back();
     }
 
@@ -75,7 +74,7 @@ void difficulty_select_loop(void)
         switch (focus)
         {
         case DIFFICULTY_CASUAL:
-#if NINTENDO_NES
+#ifdef NINTENDO_NES
             font_print(2, 11, "NONE");
 #else
             font_print(2, 11, "NOT SUPPORTED");
@@ -84,7 +83,7 @@ void difficulty_select_loop(void)
             font_print(2, 15, "TWO");
             break;
         case DIFFICULTY_EASY:
-#if NINTENDO_NES
+#ifdef NINTENDO_NES
             font_print(2, 11, "ENABLED");
 #else
             font_print(2, 11, "NOT SUPPORTED");
@@ -93,7 +92,7 @@ void difficulty_select_loop(void)
             font_print(2, 15, "TWO");
             break;
         case DIFFICULTY_HARD:
-#if NINTENDO_NES
+#ifdef NINTENDO_NES
             font_print(2, 11, "ENABLED");
 #else
             font_print(2, 11, "NOT SUPPORTED");
@@ -104,10 +103,5 @@ void difficulty_select_loop(void)
         }
     }
     last_focus = focus;
-    move_sprite(0, menu_x[focus], menu_y[focus]);
+    move_sprite(0, cursor_menu_x[focus], cursor_menu_y[focus]);
 }
-
-struct scene scene_difficulty_select = {
-    .init = difficulty_select_init,
-    .loop = difficulty_select_loop,
-};

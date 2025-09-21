@@ -50,7 +50,11 @@ static uint8_t *menu_x;
 static uint8_t *menu_y;
 void scene_upgrade_menu_init(void)
 {
-    hide_sprites_range(0, MAX_HARDWARE_SPRITES);
+    // hide_sprites_range(0, 32);
+    // for(uint8_t sprite = 0; sprite < 32; sprite++)
+    // {
+    //     move_sprite(sprite, 0, 0);
+    // }
     font_set_bkg_data(1);
     font_set_bkg_data_numeric(28);
 
@@ -68,7 +72,7 @@ void scene_upgrade_menu_init(void)
     }
 
     set_sprite_data(0, cursor_TILE_COUNT, cursor_tiles);
-    set_sprite_tile(0, GET_8x16_SPRITE_TILE(0));
+    set_sprite_tile(0, GET_8x16_SPRITE_TILE_B0(0));
 }
 
 void handle_input_up_down(uint8_t max)
@@ -123,7 +127,18 @@ uint8_t can_upgrade(uint8_t cursor_focus)
     case 8:
         return state.task_speed < TASK_SPEED_MAX;
     case 9:
-        return state.max_open_tasks < MAX_OPEN_TASKS_MAX;
+        if (state.cars == 1 && state.max_open_tasks < TASK_SLOTS_PER_CAR - MAX_OPEN_TASKS_UPGRADE_INTERVAL)
+        {
+            return 1;
+        }
+        else if (state.tools[TOOL_WRENCH].unlocked && state.max_open_tasks < 2 * TASK_SLOTS_PER_CAR - MAX_OPEN_TASKS_UPGRADE_INTERVAL)
+        {
+            return 1;
+        }
+        else if (state.tools[TOOL_CAT].unlocked && state.max_open_tasks < MAX_OPEN_TASKS_MAX)
+        {
+            return 1;
+        }
     default:
         break;
     }
@@ -161,11 +176,22 @@ void do_upgrade(uint8_t cursor_focus)
         state.task_speed += 1;
         break;
     case 9:
-        state.max_open_tasks += 4;
+        state.max_open_tasks += MAX_OPEN_TASKS_UPGRADE_INTERVAL;
         break;
     default:
         break;
     }
+}
+uint8_t at_max_upgrades(void)
+{
+    for (uint8_t upgrade = 0; upgrade < NUM_UPGRADES; upgrade++)
+    {
+        if (can_upgrade(upgrade))
+        {
+            return 0;
+        }
+    }
+    return 1;
 }
 void scene_upgrade_menu_loop(void)
 {
@@ -306,7 +332,26 @@ void scene_upgrade_menu_loop(void)
             // 9
             if (state.max_open_tasks < MAX_OPEN_TASKS_MAX)
             {
-                font_print(2, 11, "MORE OPEN TASKS");
+                if (state.cars == 1 && state.max_open_tasks < TASK_SLOTS_PER_CAR - MAX_OPEN_TASKS_UPGRADE_INTERVAL)
+                {
+                    font_print(2, 11, "MORE OPEN TASKS");
+                }
+                else if (state.tools[TOOL_WRENCH].unlocked && state.max_open_tasks < 2 * TASK_SLOTS_PER_CAR - MAX_OPEN_TASKS_UPGRADE_INTERVAL)
+                {
+                    font_print(2, 11, "MORE OPEN TASKS");
+                }
+                else if (state.tools[TOOL_CAT].unlocked && state.max_open_tasks < MAX_OPEN_TASKS_MAX)
+                {
+                    font_print(2, 11, "MORE OPEN TASKS");
+                }
+                else if (state.cars == 1)
+                {
+                    font_print(2, 11, "NEED MORE CARS");
+                }
+                else
+                {
+                    font_print(2, 11, "NEED MORE TOOLS");
+                }
             }
             else
             {
@@ -340,7 +385,7 @@ void scene_upgrade_menu_loop(void)
                 break;
             case 1:
                 advance_state();
-                queue_scene(&scene_gameplay);
+                queue_scene(SCENE_GAMEPLAY);
                 return;
             }
         }
@@ -399,8 +444,3 @@ void scene_upgrade_menu_loop(void)
     // render
     move_sprite(0, menu_x[cursor_focus], menu_y[cursor_focus]);
 }
-
-struct scene scene_upgrade_menu = {
-    .init = scene_upgrade_menu_init,
-    .loop = scene_upgrade_menu_loop,
-};

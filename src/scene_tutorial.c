@@ -6,7 +6,7 @@
 uint8_t tutorial_step;
 uint8_t tutorial_step_init;
 
-void tutorial_init(void)
+void scene_tutorial_init(void)
 {
     // copy font tiles
     font_set_bkg_data(FONT_GAMEPLAY_SAFE_TILE);
@@ -27,10 +27,10 @@ void tutorial_init(void)
         state.tasks[0][task].progress = 0;
     }
 
-    scene_gameplay.init();
+    scene_gameplay_init();
 }
 
-void tutorial_loop(void)
+void scene_tutorial_loop(void)
 {
     // init step
     if (tutorial_step_init == 0)
@@ -105,16 +105,11 @@ void tutorial_loop(void)
         case 4:
             if (PRESSED(0, J_A))
             {
-                queue_scene(&scene_main_menu);
+                queue_scene(SCENE_MAIN_MENU);
             }
             break;
         }
     }
 
-    scene_gameplay.loop();
+    scene_gameplay_loop();
 }
-
-struct scene scene_tutorial = {
-    .init = tutorial_init,
-    .loop = tutorial_loop,
-};

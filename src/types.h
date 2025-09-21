@@ -3,8 +3,10 @@
 
 #ifdef NINTENDO_NES
 #define GET_8x16_SPRITE_TILE(tile) (tile + 1)
+#define GET_8x16_SPRITE_TILE_B0(tile) (tile)
 #else
 #define GET_8x16_SPRITE_TILE(tile) (tile)
+#define GET_8x16_SPRITE_TILE_B0(tile) (tile)
 #endif
 
 #ifdef NINTENDO_NES
@@ -135,7 +137,8 @@ struct game_state
   uint8_t player_car_changed[STRUCT_MAX_PLAYABLES];
   struct animation_state player_animations[STRUCT_MAX_PLAYABLES];
   struct tool tools[TOOL_COUNT];
-#define MAX_OPEN_TASKS_MAX 30
+#define MAX_OPEN_TASKS_UPGRADE_INTERVAL 4
+#define MAX_OPEN_TASKS_MAX (2 + 3 * TASK_SLOTS_PER_CAR)
   uint8_t max_open_tasks;
   uint8_t open_task_count;
   struct task tasks[MAX_CARS][TASK_SLOTS_PER_CAR];
@@ -147,10 +150,17 @@ extern struct game_state state;
 void init_state(enum difficulty difficulty);
 void advance_state(void);
 
-struct scene
+enum scene
 {
-  void (*init)(void);
-  void (*loop)(void);
+  SCENE_MAIN_MENU,
+  SCENE_TUTORIAL,
+  SCENE_DIFFICULTY_SELECT,
+  SCENE_GAMEPLAY,
+  SCENE_UPGRADE_MENU,
 };
 
+#ifdef GAMEBOY
 #define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 20, 18, 0)
+#else
+#define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 32, 30, 0)
+#endif

@@ -10,9 +10,15 @@
 #define MENU_START_TILE_Y 6
 #define FOCUS_MAX 2
 static uint8_t focus = 0;
-static uint8_t menu_x[FOCUS_MAX] = {8 * MENU_START_TILE_X - 4, 8 * MENU_START_TILE_X - 4};
-static uint8_t menu_y[FOCUS_MAX] = {PLATFORM_Y_ADJUST + 8 * MENU_START_TILE_Y, PLATFORM_Y_ADJUST + 8 * (MENU_START_TILE_Y + 1)};
-void main_menu_init(void)
+static const uint8_t cursor_menu_x[FOCUS_MAX] = {
+    PLATFORM_X_ADJUST + 8 * (MENU_START_TILE_X - 1),
+    PLATFORM_X_ADJUST + 8 * (MENU_START_TILE_X - 1),
+};
+static const uint8_t cursor_menu_y[FOCUS_MAX] = {
+    PLATFORM_Y_ADJUST + 8 * MENU_START_TILE_Y,
+    PLATFORM_Y_ADJUST + 8 * (MENU_START_TILE_Y + 1),
+};
+void scene_main_menu_init(void)
 {
     FILL_BKG_EMPTY;
     // state
@@ -23,10 +29,10 @@ void main_menu_init(void)
     font_print(MENU_START_TILE_X, MENU_START_TILE_Y + 1, "TUTORIAL");
     // menu sprite
     set_sprite_data(0, cursor_TILE_COUNT, cursor_tiles);
-    set_sprite_tile(0, GET_8x16_SPRITE_TILE(0));
-    hide_sprites_range(0, MAX_HARDWARE_SPRITES);
+    set_sprite_tile(0, GET_8x16_SPRITE_TILE_B0(0));
+    hide_sprites_range(0, 32);
 }
-void main_menu_loop(void)
+void scene_main_menu_loop(void)
 {
     // input
     if (PRESSED(0, J_DOWN))
@@ -49,20 +55,15 @@ void main_menu_loop(void)
     }
     else if (PRESSED(0, J_A))
     {
-        struct scene *scenes_next[FOCUS_MAX] =
+        enum scene scenes_next[FOCUS_MAX] =
             {
-                &scene_difficulty_select,
-                &scene_tutorial,
+                SCENE_DIFFICULTY_SELECT,
+                SCENE_TUTORIAL,
             };
         queue_scene(scenes_next[focus]);
         sound_on_menu_confirm();
     }
 
     // render
-    move_sprite(0, menu_x[focus], menu_y[focus]);
+    move_sprite(0, cursor_menu_x[focus], cursor_menu_y[focus]);
 }
-
-struct scene scene_main_menu = {
-    .init = main_menu_init,
-    .loop = main_menu_loop,
-};

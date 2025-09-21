@@ -1,3 +1,4 @@
+#pragma bank 1
 #include <gbdk/platform.h>
 #include "types.h"
 #include "input.h"
@@ -39,9 +40,9 @@
 // #define PLAYER_X_ADJUST(current_player) ((current_player == 0 || current_player == 2) ? 0 : 120)
 #define PLAYER_X_ADJUST(current_player) (0)
 #define PLAYER_X_ADJUST_TILE(current_player) (0)
-uint8_t _player_y_adjust[4] = {TRAIN_CAR_HEIGHT * 0, TRAIN_CAR_HEIGHT * 1, TRAIN_CAR_HEIGHT * 2, TRAIN_CAR_HEIGHT * 3};
+const uint8_t _player_y_adjust[4] = {TRAIN_CAR_HEIGHT * 0, TRAIN_CAR_HEIGHT * 1, TRAIN_CAR_HEIGHT * 2, TRAIN_CAR_HEIGHT * 3};
 #define PLAYER_Y_ADJUST(current_player) (_player_y_adjust[current_player])
-uint8_t _player_y_adjust_tile[4] = {TRAIN_CAR_HEIGHT / 8 * 0, TRAIN_CAR_HEIGHT / 8 * 1, TRAIN_CAR_HEIGHT / 8 * 2, TRAIN_CAR_HEIGHT / 8 * 3};
+const uint8_t _player_y_adjust_tile[4] = {TRAIN_CAR_HEIGHT / 8 * 0, TRAIN_CAR_HEIGHT / 8 * 1, TRAIN_CAR_HEIGHT / 8 * 2, TRAIN_CAR_HEIGHT / 8 * 3};
 #define PLAYER_Y_ADJUST_TILE(current_player) (_player_y_adjust_tile[current_player])
 #else
 #define PLAYER_X_ADJUST(current_player) (0)
@@ -750,7 +751,7 @@ void intialize_tasks(void)
 }
 
 // >>> ",".join(map(str, [8-round(i*(8/120)) for i in range(121)] ))
-uint8_t task_progress_lookup_table[TASK_PROGRESS_INIT + 1] = {
+const uint8_t task_progress_lookup_table[TASK_PROGRESS_INIT + 1] = {
     8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0};
 uint8_t task_sprite_modifier_frame = 0;
 struct coordinate
@@ -764,7 +765,7 @@ struct coordinate
 #define TASK_LOWER_ROW(task) \
     {                        \
         .x = 6 + task * 2, .y = LOWER_ROW_Y}
-struct coordinate task_slot_x_y[TASK_SLOTS_PER_CAR] = {
+const struct coordinate task_slot_x_y[TASK_SLOTS_PER_CAR] = {
     TASK_UPPER_ROW(0),
     TASK_UPPER_ROW(1),
     TASK_UPPER_ROW(2),
@@ -926,49 +927,46 @@ void maybe_create_tasks(struct game_state *state)
         iters++;
     }
     direction = direction == 1 ? -1 : 1;
-    // pick car
-    // do not spawn in the same car as the tool (except when cars == 1)
-    uint8_t car = rand() % state->cars;
-    if (car == state->tools[tool].car)
-    {
-        car = (car + 1) % state->cars;
-    }
-    // pick slot
-    uint8_t slot = rand() % TASK_SLOTS_PER_CAR;
-    for (uint8_t t_i = slot; t_i < slot + TASK_SLOTS_PER_CAR; t_i++)
-    {
-        uint8_t current_slot = t_i % TASK_SLOTS_PER_CAR;
-        if (state->tasks[car][current_slot].progress == 0)
-        {
-            // create task
-            state->tasks[car][current_slot].tool = tool;
-            state->tasks[car][current_slot].progress = TASK_PROGRESS_INIT;
-            switch (tool)
-            {
-            case TOOL_WIFI:
-                state->tasks[car][current_slot].happiness_reward = 1;
-                break;
-            case TOOL_WRENCH:
-            case TOOL_DRINK:
-                state->tasks[car][current_slot].happiness_reward = 3;
-                break;
-            case TOOL_CAT:
-                state->tasks[car][current_slot].happiness_reward = 5;
-                break;
-            case TOOL_MUSIC:
-                state->tasks[car][current_slot].happiness_reward = 7;
-                break;
-            }
-            if (state->difficulty == DIFFICULTY_CASUAL || state->difficulty == DIFFICULTY_EASY)
-            {
-                state->tasks[car][current_slot].happiness_reward += 2;
-            }
 
-            state->open_task_count++;
-            return;
+    // find open slot starting from random car
+    for (uint8_t car_seed = rand() % state->cars, car_start = car_seed; car_seed < car_start + MAX_CARS; car_seed++)
+    {
+        uint8_t car = car_seed % state->cars;
+        // find open slot start from random slot
+        for (uint8_t slot_start = rand() % TASK_SLOTS_PER_CAR, slot_seed = slot_start; slot_seed < slot_start + TASK_SLOTS_PER_CAR; slot_seed++)
+        {
+            uint8_t slot = slot_seed % TASK_SLOTS_PER_CAR;
+            if (state->tasks[car][slot].progress == 0)
+            {
+                // create task
+                state->tasks[car][slot].tool = tool;
+                state->tasks[car][slot].progress = TASK_PROGRESS_INIT;
+                switch (tool)
+                {
+                case TOOL_WIFI:
+                    state->tasks[car][slot].happiness_reward = 1;
+                    break;
+                case TOOL_WRENCH:
+                case TOOL_DRINK:
+                    state->tasks[car][slot].happiness_reward = 3;
+                    break;
+                case TOOL_CAT:
+                    state->tasks[car][slot].happiness_reward = 5;
+                    break;
+                case TOOL_MUSIC:
+                    state->tasks[car][slot].happiness_reward = 7;
+                    break;
+                }
+                if (state->difficulty == DIFFICULTY_CASUAL || state->difficulty == DIFFICULTY_EASY)
+                {
+                    state->tasks[car][slot].happiness_reward += 2;
+                }
+
+                state->open_task_count++;
+                return;
+            }
         }
     }
-    // at max tasks per car
 }
 
 uint8_t get_round_tasks(uint8_t round)
@@ -1024,17 +1022,22 @@ struct game_state starter_state = {
     .round = 0,
     .current_distance = 0,
     .current_distance_tick = 0,
-    .max_open_tasks = 2,
+    // .max_open_tasks = 2,
+    .max_open_tasks = 2 + 3 * 6,
     .open_task_count = 0,
-    .cars = 1,
+    // .cars = 1,
+    .cars = 4,
     .round_score = 0,
     .walk_speed = 1,
-    .run_speed = 1,
+    .run_speed = 3,
     .run_ticks = 14,
-    .task_speed = 1,
+    .task_speed = 3,
     .player_animations = PLAYER_ANIMATIONS_INIT,
     .tools = {
         // TOOL_WIFI
+        {.unlocked = 1},
+        {.unlocked = 1},
+        {.unlocked = 1},
         {.unlocked = 1},
     },
 };
@@ -1054,7 +1057,8 @@ void advance_state(void)
     // rounds get longer
     if (1 <= state.round && state.round <= 4)
     {
-        state.round_distance_ticks = 16;
+        // state.round_distance_ticks = 16;
+        state.round_distance_ticks = 1;
         if (state.difficulty == DIFFICULTY_CASUAL)
         {
             state.customer_happiness = 0;
@@ -1132,11 +1136,10 @@ void advance_state(void)
     state.open_task_count = 0;
 }
 
-void scene_gameplay_init(void)
+void scene_gameplay_init(void) BANKED
 {
     FILL_BKG_EMPTY;
     // train map
-    SWITCH_ROM(BANK(train_map_0));
     initialize_train_map();
     // player map logo
     initialize_players_map();
@@ -1158,7 +1161,7 @@ void scene_gameplay_init(void)
     draw_train_map(&state);
 }
 
-void scene_gameplay_loop(void)
+void scene_gameplay_loop(void) BANKED
 {
     // handle input
     for (uint8_t npc = MAX_PLAYERS; npc < MAX_PLAYABLES; npc++)
@@ -1198,11 +1201,11 @@ void scene_gameplay_loop(void)
     }
     if (state.current_distance == ROUND_DISTANCE)
     {
-        queue_scene(&scene_upgrade_menu);
+        for (uint8_t sprite = 0; sprite < 32; sprite++)
+        {
+            move_sprite(sprite, 0, 0);
+        }
+        // hide_sprites_range(0, 32);
+        queue_scene(SCENE_UPGRADE_MENU);
     }
 }
-
-struct scene scene_gameplay = {
-    .init = scene_gameplay_init,
-    .loop = scene_gameplay_loop,
-};

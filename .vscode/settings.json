@@ -11,6 +11,9 @@
         "input.h": "c",
         "font.h": "c",
         "platform.h": "c",
-        "font_numeric.h": "c"
+        "font_numeric.h": "c",
+        "cursor.h": "c",
+        "font_alphabet.h": "c",
+        "metasprites.h": "c"
     }
 }
