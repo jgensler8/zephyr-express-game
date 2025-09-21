@@ -4,7 +4,7 @@ This was built for the GBJAM 16.
 
 # Platforms
 
-This game targest Game Boy (Solo) and NES (2 Player Co-Op).
+This game targets Game Boy (Solo) and NES (2 Player Co-Op).
 
 As it is built with GBDK, it may also support other platforms with a few more changes.
 
