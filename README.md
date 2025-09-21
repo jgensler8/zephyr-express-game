@@ -1,6 +1,6 @@
 # Zephyr Express
 
-This was built for the GBJAM 16.
+This was built for the GBJAM 13.
 
 # Platforms
 
