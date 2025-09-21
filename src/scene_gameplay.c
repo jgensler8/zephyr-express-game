@@ -1022,23 +1022,26 @@ struct game_state starter_state = {
     .round = 0,
     .current_distance = 0,
     .current_distance_tick = 0,
-    // .max_open_tasks = 2,
-    .max_open_tasks = 2 + 3 * 6,
+    .max_open_tasks = 2,
     .open_task_count = 0,
-    // .cars = 1,
-    .cars = 4,
+#ifdef NINTENDO_NES
+    .cars = 2,
+#else
+    .cars = 1,
+#endif
     .round_score = 0,
     .walk_speed = 1,
-    .run_speed = 3,
+    .run_speed = 1,
     .run_ticks = 14,
-    .task_speed = 3,
+    .task_speed = 1,
     .player_animations = PLAYER_ANIMATIONS_INIT,
     .tools = {
-        // TOOL_WIFI
+#ifdef NINTENDO_NES
         {.unlocked = 1},
         {.unlocked = 1},
+#else
         {.unlocked = 1},
-        {.unlocked = 1},
+#endif
     },
 };
 
@@ -1057,8 +1060,7 @@ void advance_state(void)
     // rounds get longer
     if (1 <= state.round && state.round <= 4)
     {
-        // state.round_distance_ticks = 16;
-        state.round_distance_ticks = 1;
+        state.round_distance_ticks = 16;
         if (state.difficulty == DIFFICULTY_CASUAL)
         {
             state.customer_happiness = 0;
