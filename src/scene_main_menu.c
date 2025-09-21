@@ -21,6 +21,7 @@ static const uint8_t cursor_menu_y[FOCUS_MAX] = {
 void scene_main_menu_init(void)
 {
     FILL_BKG_EMPTY;
+    HIDE_SPRITES_RANGE;
     // state
     focus = 0;
     // menu text
@@ -29,8 +30,9 @@ void scene_main_menu_init(void)
     font_print(MENU_START_TILE_X, MENU_START_TILE_Y + 1, "TUTORIAL");
     // menu sprite
     set_sprite_data(0, cursor_TILE_COUNT, cursor_tiles);
-    set_sprite_tile(0, GET_8x16_SPRITE_TILE_B0(0));
-    hide_sprites_range(0, 32);
+    set_sprite_tile(0, GET_8x16_SPRITE_TILE(0));
+    move_sprite(0, cursor_menu_x[focus], cursor_menu_y[focus]);
+    vsync();
 }
 void scene_main_menu_loop(void)
 {
@@ -66,4 +68,5 @@ void scene_main_menu_loop(void)
 
     // render
     move_sprite(0, cursor_menu_x[focus], cursor_menu_y[focus]);
+    vsync();
 }

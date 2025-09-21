@@ -3,10 +3,8 @@
 
 #ifdef NINTENDO_NES
 #define GET_8x16_SPRITE_TILE(tile) (tile + 1)
-#define GET_8x16_SPRITE_TILE_B0(tile) (tile)
 #else
 #define GET_8x16_SPRITE_TILE(tile) (tile)
-#define GET_8x16_SPRITE_TILE_B0(tile) (tile)
 #endif
 
 #ifdef NINTENDO_NES
@@ -165,3 +163,5 @@ enum scene
 #else
 #define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 32, 30, 0)
 #endif
+
+#define HIDE_SPRITES_RANGE hide_sprites_range(0, MAX_HARDWARE_SPRITES)

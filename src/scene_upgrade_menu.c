@@ -50,11 +50,7 @@ static uint8_t *menu_x;
 static uint8_t *menu_y;
 void scene_upgrade_menu_init(void)
 {
-    // hide_sprites_range(0, 32);
-    // for(uint8_t sprite = 0; sprite < 32; sprite++)
-    // {
-    //     move_sprite(sprite, 0, 0);
-    // }
+    HIDE_SPRITES_RANGE;
     font_set_bkg_data(1);
     font_set_bkg_data_numeric(28);
 
@@ -72,7 +68,7 @@ void scene_upgrade_menu_init(void)
     }
 
     set_sprite_data(0, cursor_TILE_COUNT, cursor_tiles);
-    set_sprite_tile(0, GET_8x16_SPRITE_TILE_B0(0));
+    set_sprite_tile(0, GET_8x16_SPRITE_TILE(0));
 }
 
 void handle_input_up_down(uint8_t max)
@@ -443,4 +439,5 @@ void scene_upgrade_menu_loop(void)
 
     // render
     move_sprite(0, menu_x[cursor_focus], menu_y[cursor_focus]);
+    vsync();
 }

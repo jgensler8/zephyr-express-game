@@ -1206,11 +1206,6 @@ void scene_gameplay_loop(void) BANKED
     }
     if (state.current_distance == ROUND_DISTANCE)
     {
-        for (uint8_t sprite = 0; sprite < 32; sprite++)
-        {
-            move_sprite(sprite, 0, 0);
-        }
-        // hide_sprites_range(0, 32);
         queue_scene(SCENE_UPGRADE_MENU);
     }
 }

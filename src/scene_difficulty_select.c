@@ -104,4 +104,5 @@ void scene_difficulty_select_loop(void)
     }
     last_focus = focus;
     move_sprite(0, cursor_menu_x[focus], cursor_menu_y[focus]);
+    vsync();
 }
