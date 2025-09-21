@@ -1190,6 +1190,11 @@ void scene_gameplay_loop(void) BANKED
     reset_player_car_changed(&state);
 
     // distance tick
+    // skip distance checks in the tutorial
+    if (state.tutorial)
+    {
+        return;
+    }
     if (state.current_distance_tick == 0)
     {
         state.current_distance_tick = state.round_distance_ticks;

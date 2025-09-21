@@ -115,6 +115,7 @@ enum difficulty
 #define ROUND_DISTANCE 100
 struct game_state
 {
+  uint8_t tutorial;
   enum difficulty difficulty;
   uint8_t round;
   uint8_t round_tasks;

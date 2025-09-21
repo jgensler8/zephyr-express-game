@@ -6,6 +6,12 @@
 uint8_t tutorial_step;
 uint8_t tutorial_step_init;
 
+#ifdef NINTENDO_NES
+#define TUTORIAL_TEXT_Y 18
+#else
+#define TUTORIAL_TEXT_Y 11
+#endif
+
 void scene_tutorial_init(void)
 {
     // copy font tiles
@@ -14,18 +20,8 @@ void scene_tutorial_init(void)
     // set state
     tutorial_step = 0;
     tutorial_step_init = 0;
-    state = default_state;
-    state.cars = 1;
-    state.open_task_count = 1;
-    state.max_open_tasks = 1;
-    for (uint8_t tool = 1; tool < TOOL_COUNT; tool++)
-    {
-        state.tools[tool].unlocked = 0;
-    }
-    for (uint8_t task = 1; task < TASK_SLOTS_PER_CAR; task++)
-    {
-        state.tasks[0][task].progress = 0;
-    }
+    init_state(0);
+    state.tutorial = 1;
 
     scene_gameplay_init();
 }
@@ -35,38 +31,38 @@ void scene_tutorial_loop(void)
     // init step
     if (tutorial_step_init == 0)
     {
-        fill_bkg_rect(0, 12, 20, 6, 0);
+        fill_bkg_rect(0, TUTORIAL_TEXT_Y, 20, 7, 0);
         switch (tutorial_step)
         {
         case 0:
-            font_print(1, 12, "WELCOME TO THE");
-            font_print(2, 13, "TUTORIAL");
-            font_print(1, 15, "TRY TO MOVE");
-            font_print(2, 16, "LEFT AND RIGHT");
+            font_print(1, TUTORIAL_TEXT_Y, "WELCOME TO THE");
+            font_print(2, TUTORIAL_TEXT_Y + 1, "TUTORIAL");
+            font_print(1, TUTORIAL_TEXT_Y + 3, "TRY TO MOVE");
+            font_print(2, TUTORIAL_TEXT_Y + 4, "LEFT AND RIGHT");
             break;
         case 1:
-            font_print(1, 12, "GREAT");
-            font_print(1, 13, "MOVE TO THE TOOL");
-            font_print(2, 14, "ON THE RIGHT");
-            font_print(1, 15, "PRESS A TO");
-            font_print(2, 16, "PICK IT UP");
+            font_print(1, TUTORIAL_TEXT_Y, "GREAT");
+            font_print(1, TUTORIAL_TEXT_Y + 2, "MOVE TO THE TOOL");
+            font_print(2, TUTORIAL_TEXT_Y + 3, "ON THE RIGHT");
+            font_print(1, TUTORIAL_TEXT_Y + 5, "PRESS A TO");
+            font_print(2, TUTORIAL_TEXT_Y + 6, "PICK IT UP");
             break;
         case 2:
-            font_print(1, 12, "WONDERFUL");
-            font_print(1, 13, "WALK TO THE TASK");
-            font_print(1, 15, "TRY TO MATCH THE");
-            font_print(2, 16, "SYMBOL OF THE TOOL");
+            font_print(1, TUTORIAL_TEXT_Y, "WONDERFUL");
+            font_print(1, TUTORIAL_TEXT_Y + 1, "WALK TO THE TASK");
+            font_print(1, TUTORIAL_TEXT_Y + 3, "TRY TO MATCH THE");
+            font_print(2, TUTORIAL_TEXT_Y + 4, "SYMBOL OF THE TOOL");
             break;
         case 3:
-            font_print(1, 12, "AWESOME");
-            font_print(1, 13, "COMPLETE THREE");
-            font_print(2, 14, "MORE TASKS");
+            font_print(1, TUTORIAL_TEXT_Y, "AWESOME");
+            font_print(1, TUTORIAL_TEXT_Y + 2, "COMPLETE THREE");
+            font_print(2, TUTORIAL_TEXT_Y + 3, "MORE TASKS");
             break;
         case 4:
-            font_print(1, 12, "CONGRATULATIONS");
-            font_print(1, 13, "YOUVE COMPLETED THE");
-            font_print(2, 14, "TUTORIAL");
-            font_print(1, 16, "PRESS A TO LEAVE");
+            font_print(1, TUTORIAL_TEXT_Y, "CONGRATULATIONS");
+            font_print(1, TUTORIAL_TEXT_Y + 1, "YOUVE COMPLETED THE");
+            font_print(2, TUTORIAL_TEXT_Y + 2, "TUTORIAL");
+            font_print(1, TUTORIAL_TEXT_Y + 4, "PRESS A TO LEAVE");
             break;
         }
         tutorial_step_init = 1;
