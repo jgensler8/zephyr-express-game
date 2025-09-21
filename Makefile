@@ -1,8 +1,8 @@
 CC	= ../../bin/lcc -Wa-l -Wl-j
 ROMUSAGE = ../../bin/romusage
 PNG2ASSET = ../../bin/png2asset
-GB_BIN	= train-game.gb
-NES_BIN = train-game.nes
+GB_BIN	= zephyr-express.gb
+NES_BIN = zephyr-express.nes
 ASSETS_TOOLS = tool_wifi.png tool_wrench.png tool_drink.png tool_cat.png tool_music.png
 ASSETS_PLAYER_LOGOS = train_player_logo_0.png train_player_logo_1.png train_player_logo_2.png train_player_logo_3.png
 ASSETS_PER_PLAYER = conductor_0.png conductor_1.png conductor_2.png conductor_3.png player_banner_0.png player_banner_1.png

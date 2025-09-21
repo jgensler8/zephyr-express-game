@@ -1064,7 +1064,8 @@ void advance_state(void)
     // rounds get longer
     if (1 <= state.round && state.round <= 4)
     {
-        state.round_distance_ticks = 16;
+        state.round_distance_ticks = 1;
+        // state.round_distance_ticks = 16;
         if (state.difficulty == DIFFICULTY_CASUAL)
         {
             state.customer_happiness = 0;

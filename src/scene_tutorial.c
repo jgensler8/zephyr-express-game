@@ -32,6 +32,7 @@ void scene_tutorial_loop(void)
     if (tutorial_step_init == 0)
     {
         fill_bkg_rect(0, TUTORIAL_TEXT_Y, 20, 7, 0);
+        vsync();
         switch (tutorial_step)
         {
         case 0:

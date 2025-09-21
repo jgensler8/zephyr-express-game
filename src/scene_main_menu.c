@@ -45,6 +45,7 @@ void scene_main_menu_init(void)
     state.player_positions[0].y = 144 - 16;
     state.player_positions[0].car = 0;
     state.player_positions[0].direction = DIRECTION_RIGHT;
+    state.player_positions[1].car = 2;
 
     vsync();
 }

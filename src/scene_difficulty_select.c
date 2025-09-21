@@ -67,7 +67,12 @@ void scene_difficulty_select_loop(void)
     // render
     if (focus != last_focus)
     {
+#ifdef NINTENDO_NES
+        fill_bkg_rect(0, 10, 32, 10, 0);
+#else
         fill_bkg_rect(0, 10, 20, 10, 0);
+#endif
+        vsync();
         font_print(1, 10, "COLLISION");
         font_print(1, 12, "ANGRY CUSTOMERS");
         font_print(1, 14, "ROUND UNLOCKS");

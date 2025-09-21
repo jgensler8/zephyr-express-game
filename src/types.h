@@ -159,9 +159,9 @@ enum scene
 };
 
 #ifdef GAMEBOY
-#define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 20, 18, 0)
+#define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 20, 18, 0); vsync();
 #else
-#define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 32, 30, 0)
+#define FILL_BKG_EMPTY fill_bkg_rect(0, 0, 32, 30, 0); vsync();
 #endif
 
 #define HIDE_SPRITES_RANGE hide_sprites_range(0, MAX_HARDWARE_SPRITES)

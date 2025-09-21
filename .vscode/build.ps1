@@ -5,7 +5,7 @@
 $emulatorProcessName = "mGBA"
 $emulatorPath = "c:\Users\jgens\Downloads\mGBA-0.10.5-win64\mGBA-0.10.5-win64\mGBA.exe"
 # $emulatorPath = "C:\Program Files\mGBA\mGBA.exe"
-$makeTarget = "train-game.gb"
+$makeTarget = "zephyr-express.gb"
 # ---------------------
 
 Write-Host "Attempting to stop any running '$emulatorProcessName' processes..."
